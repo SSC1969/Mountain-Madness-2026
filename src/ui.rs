@@ -58,17 +58,17 @@ static CAUGHT_FRAME: &str = r#"
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Flex, Layout, Rect, Spacing},
-    style::{Color, Style},
+    style::{Color, Style, Stylize},
     symbols::merge::MergeStrategy,
     text::Line,
     widgets::{
-        Block, BorderType, Clear, List, ListItem, Padding, Paragraph, StatefulWidget, Widget,
+        Block, BorderType, Clear, List, ListItem, Padding, Paragraph, StatefulWidget, Tabs, Widget,
     },
 };
 
 use crate::{
     app::{Anim, App, InputMode, MENU_SIZE, Menu},
-    inventory::dex::DexEntry,
+    inventory::dex::{DexEntries, DexEntry},
     items::{Item, ItemTypes},
 };
 
@@ -83,10 +83,9 @@ impl Widget for &mut App {
         let [main, toolbar] = Layout::vertical([Constraint::Fill(1), Constraint::Max(3)])
             .spacing(Spacing::Overlap(1))
             .areas(area);
-        let [viewport, menu] =
-            Layout::horizontal([Constraint::Fill(1), Constraint::Percentage(25)])
-                .spacing(Spacing::Overlap(1))
-                .areas(main);
+        let [viewport, menu] = Layout::horizontal([Constraint::Fill(1), Constraint::Length(31)])
+            .spacing(Spacing::Overlap(1))
+            .areas(main);
 
         let [_, viewport_bottom] =
             Layout::vertical([Constraint::Fill(1), Constraint::Max(8)]).areas(viewport);
@@ -235,37 +234,80 @@ impl App {
                 .centered()
                 .block(block)
                 .render(area, buf),
-            Menu::Backpack => {
-                let list_items = self.player.backpack.items.iter().map(|item| {
-                    if let ItemTypes::Rod(rod) = item
-                        && *rod == self.player.equipped_rod
-                    {
-                        ListItem::from(rod.equipped_lines())
-                    } else {
-                        ListItem::from(item)
-                    }
-                });
-                let list = List::new(list_items)
-                    .highlight_style(Style::new().reversed())
-                    .block(block);
-                StatefulWidget::render(list, area, buf, &mut self.backpack_state);
-            }
-            Menu::Dex => {
-                let list_items = self
-                    .player
-                    .dex
-                    .get_all()
-                    .into_iter()
-                    .map(|entry| ListItem::from(entry.get_lines()));
-                let list = List::new(list_items)
-                    .highlight_style(Style::new().reversed())
-                    .block(block);
-                StatefulWidget::render(list, area, buf, &mut self.dex_state);
-            }
+            Menu::Backpack => self.render_backpack(area, buf, block),
+            Menu::Dex => self.render_dex(area, buf, block),
             Menu::Options => Paragraph::new("Options")
                 .centered()
                 .block(block)
                 .render(area, buf),
         }
+    }
+
+    fn render_backpack(&mut self, area: Rect, buf: &mut Buffer, block: Block) {
+        let mut items = self.player.backpack.items.clone();
+
+        let inner = block.inner(area);
+        let [tabs_area, content_area] =
+            Layout::vertical(vec![Constraint::Length(1), Constraint::Min(0)]).areas(inner);
+
+        block.render(area, buf);
+
+        let [centered_tabs] = Layout::horizontal(vec![Constraint::Length(13)])
+            .flex(Flex::Center)
+            .areas(tabs_area);
+        Tabs::new(vec!["Fish", "Tools"])
+            .bold()
+            .select(self.menu_tab as usize)
+            .render(centered_tabs, buf);
+
+        // filter the items based on whether the player has fish or tools selected
+        items.retain(|item| match item {
+            ItemTypes::Fish(_) => self.menu_tab == 0,
+            ItemTypes::Rod(_) => self.menu_tab == 1,
+        });
+
+        let list_items = items.iter().map(|item| {
+            // highlight the currently equipped rod
+            if let ItemTypes::Rod(rod) = item
+                && *rod == self.player.equipped_rod
+            {
+                ListItem::from(rod.equipped_lines())
+            } else {
+                ListItem::from(item)
+            }
+        });
+        let list = List::new(list_items).highlight_style(Style::new().reversed());
+        StatefulWidget::render(list, content_area, buf, &mut self.backpack_state);
+    }
+
+    fn render_dex(&mut self, area: Rect, buf: &mut Buffer, block: Block) {
+        let mut items = self.player.dex.get_all();
+
+        let inner = block.inner(area);
+        let [tabs_area, content_area] =
+            Layout::vertical(vec![Constraint::Length(1), Constraint::Min(0)]).areas(inner);
+
+        block.render(area, buf);
+
+        let [centered_tabs] = Layout::horizontal(vec![Constraint::Length(13)])
+            .flex(Flex::Center)
+            .areas(tabs_area);
+        Tabs::new(vec!["Fish", "Tools"])
+            .bold()
+            .select(self.menu_tab as usize)
+            .render(centered_tabs, buf);
+
+        // filter the items based on whether the player has fish or tools selected
+        items.retain(|item| match item {
+            DexEntries::Fish(_) => self.menu_tab == 0,
+            DexEntries::Rod(_) => self.menu_tab == 1,
+        });
+
+        let list_items = items
+            .into_iter()
+            .map(|entry| ListItem::from(entry.get_lines()));
+
+        let list = List::new(list_items).highlight_style(Style::new().reversed());
+        StatefulWidget::render(list, content_area, buf, &mut self.dex_state);
     }
 }

@@ -55,6 +55,8 @@ pub struct App {
     pub chat: ChatHandler,
     /// Currently open menu
     pub menu: Menu,
+    /// Currently selected menu tab (if applicable)
+    pub menu_tab: u32,
     /// Player data struct
     pub player: Player,
     /// Backpack state for ui
@@ -91,6 +93,7 @@ impl App {
             events,
             chat: ChatHandler::new(event_tx),
             menu: Menu::default(),
+            menu_tab: 0,
             player: Player::default(),
             backpack_state: ListState::default(),
             dex_state: ListState::default(),
@@ -192,12 +195,6 @@ impl App {
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
                 self.events.send(AppEvent::Quit)
             }
-            KeyCode::Left => self
-                .events
-                .send(AppEvent::Navigate(NavigationDirection::Left)),
-            KeyCode::Right => self
-                .events
-                .send(AppEvent::Navigate(NavigationDirection::Right)),
             KeyCode::Char(' ') => self.events.send(AppEvent::FishBiting),
             KeyCode::Char('t') => self
                 .events
@@ -218,6 +215,8 @@ impl App {
             Menu::Backpack => match key_event.code {
                 KeyCode::Up => self.backpack_state.select_previous(),
                 KeyCode::Down => self.backpack_state.select_next(),
+                KeyCode::Left => self.menu_tab = (self.menu_tab + 1) % 2,
+                KeyCode::Right => self.menu_tab = (self.menu_tab + 1) % 2,
                 KeyCode::Enter => {
                     if let Some(index) = self.backpack_state.selected() {
                         match &self.player.backpack.items[index] {
@@ -235,6 +234,8 @@ impl App {
             Menu::Dex => match key_event.code {
                 KeyCode::Up => self.dex_state.select_previous(),
                 KeyCode::Down => self.dex_state.select_next(),
+                KeyCode::Left => self.menu_tab = (self.menu_tab + 1) % 2,
+                KeyCode::Right => self.menu_tab = (self.menu_tab + 1) % 2,
                 _ => {}
             },
             _ => {}
