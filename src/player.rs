@@ -133,6 +133,7 @@ mod tests {
     fn test_catch_fish() {
         let mut p = Player::default();
         p.catch_fish();
-        assert!(p.backpack.get_all().len() == 1)
+        // should be two, as by default the player will have one item (the average rod)
+        assert_eq!(p.backpack.get_all().len(), 2);
     }
 }
