@@ -120,7 +120,7 @@ impl DexEntry for FishEntry {
             if self.count <= 0 {
                 vec![
                     Line::from("???").bold().underlined(),
-                    "You haven't discovered this yet!".into(),
+                    "Not discovered yet!".into(),
                 ]
             } else {
                 let l1 = Line::from(vec![
