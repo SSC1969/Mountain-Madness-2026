@@ -18,7 +18,10 @@ pub struct Shop {
 
 impl Default for Shop {
     fn default() -> Self {
-        let available = vec![ItemTypes::Rod(RODS[1].clone())];
+        let available = vec![
+            ItemTypes::Rod(RODS[1].clone()),
+            ItemTypes::Rod(RODS[2].clone()),
+        ];
         Self {
             available_inventory: available,
             state: ListState::default(),

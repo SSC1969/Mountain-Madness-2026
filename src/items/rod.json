@@ -2,15 +2,22 @@
     {
         "name": "Average Rod",
         "value": 50,
-        "color": "Red",
+        "color": "Green",
         "lure_mult": 100.0,
-        "hook_strength": 1.0
+        "hook_strength": 100.0
     },
     {
         "name": "Patient Rod",
         "value": 250,
         "color": "Blue",
         "lure_mult": 3.3,
-        "hook_strength": 15.0
+        "hook_strength": 1500.0
+    },
+    {
+        "name": "Rush Rod",
+        "value": 500,
+        "color": "Red",
+        "lure_mult": 250,
+        "hook_strength": 10.0
     }
 ]
