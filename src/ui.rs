@@ -183,6 +183,8 @@ impl App {
             .border_type(BorderType::Rounded)
             .merge_borders(MergeStrategy::Exact);
 
+        let inner = block.inner(area);
+
         let mut x = 0;
         let mut y = 0;
         let frame = match self.anim {
@@ -206,6 +208,17 @@ impl App {
             let icon = Line::from(fish.icon());
             buf.set_line(x, y, &icon, icon.width() as u16);
         }
+
+        // render toast, if applicable
+        if self.toast.timer > 0 {
+            let [_, toast_area] =
+                Layout::vertical(vec![Constraint::Fill(1), Constraint::Percentage(15)])
+                    .areas(inner);
+            Paragraph::new(self.toast.message.clone())
+                .left_aligned()
+                .bold()
+                .render(toast_area, buf);
+        }
     }
 
     fn render_toolbar(&self, area: Rect, buf: &mut Buffer) {
@@ -219,9 +232,11 @@ impl App {
             .flex(Flex::Center)
             .split(inner);
 
-        Line::from("<h> Home").centered().render(layout[0], buf);
-        Line::from("<b> Backpack").centered().render(layout[1], buf);
-        Line::from("<d> Dex").centered().render(layout[2], buf);
+        Line::from("<b> Backpack").centered().render(layout[0], buf);
+        Line::from("<p> Fincyclopedia")
+            .centered()
+            .render(layout[1], buf);
+        Line::from("<m> Market").centered().render(layout[2], buf);
         Line::from("<o> Options").centered().render(layout[3], buf);
 
         block.render(area, buf);
@@ -236,12 +251,9 @@ impl App {
             .padding(Padding::horizontal(1));
 
         match self.menu {
-            Menu::Home => Paragraph::new("Home")
-                .centered()
-                .block(block)
-                .render(area, buf),
             Menu::Backpack => self.render_backpack(area, buf, block),
-            Menu::Dex => self.render_dex(area, buf, block),
+            Menu::Fincyclopedia => self.render_dex(area, buf, block),
+            Menu::Market => self.render_shop(area, buf, block),
             Menu::Options => Paragraph::new("Options")
                 .centered()
                 .block(block)
@@ -253,10 +265,16 @@ impl App {
         let items = self.player.backpack.items.clone();
 
         let inner = block.inner(area);
-        let [tabs_area, content_area] =
-            Layout::vertical(vec![Constraint::Length(1), Constraint::Min(0)]).areas(inner);
+        let [tabs_area, content_area, controls_area] = Layout::vertical(vec![
+            Constraint::Length(1),
+            Constraint::Min(0),
+            Constraint::Length(1),
+        ])
+        .areas(inner);
 
         block.render(area, buf);
+
+        Paragraph::new("⮁ move <s> sell ⏎ equip").render(controls_area, buf);
 
         let [centered_tabs] = Layout::horizontal(vec![Constraint::Length(13)])
             .flex(Flex::Center)
@@ -310,10 +328,16 @@ impl App {
         let mut items = self.player.dex.get_all();
 
         let inner = block.inner(area);
-        let [tabs_area, content_area] =
-            Layout::vertical(vec![Constraint::Length(1), Constraint::Min(0)]).areas(inner);
+        let [tabs_area, content_area, controls_area] = Layout::vertical(vec![
+            Constraint::Length(1),
+            Constraint::Min(0),
+            Constraint::Length(1),
+        ])
+        .areas(inner);
 
         block.render(area, buf);
+
+        Paragraph::new("⮁ navigate").render(controls_area, buf);
 
         let [centered_tabs] = Layout::horizontal(vec![Constraint::Length(13)])
             .flex(Flex::Center)
@@ -335,5 +359,58 @@ impl App {
 
         let list = List::new(list_items).highlight_style(Style::new().reversed());
         StatefulWidget::render(list, content_area, buf, &mut self.dex_state);
+    }
+
+    fn render_shop(&mut self, area: Rect, buf: &mut Buffer, block: Block) {
+        let inner = block.inner(area);
+        let [tabs_area, content_area, controls_area] = Layout::vertical(vec![
+            Constraint::Length(1),
+            Constraint::Min(0),
+            Constraint::Length(1),
+        ])
+        .areas(inner);
+        block.render(area, buf);
+
+        Paragraph::new("⮁ navigate, ⏎ buy").render(controls_area, buf);
+
+        let items = self.shop.get_available();
+
+        let [centered_tabs] = Layout::horizontal(vec![Constraint::Length(13)])
+            .flex(Flex::Center)
+            .areas(tabs_area);
+        Tabs::new(vec!["Fish", "Tools"])
+            .bold()
+            .select(self.menu_tab as usize)
+            .render(centered_tabs, buf);
+
+        // filter the items based on whether the player has fish or tools selected
+        let mut new_items = Vec::new();
+        let mut j = 0;
+        for (i, item) in items.into_iter().enumerate() {
+            match item {
+                // add items to the ui list only if it matches the currently selected tab
+                ItemTypes::Fish(_) => {
+                    if self.menu_tab == 0 {
+                        // add a mapping from the elements new index (in the UI list) to it's
+                        // original index (in the shop struct)
+                        self.shop.ui_index_map.insert(j, i);
+                        j += 1;
+                        new_items.push(item);
+                    }
+                }
+                ItemTypes::Rod(_) => {
+                    if self.menu_tab == 1 {
+                        self.shop.ui_index_map.insert(j, i);
+                        j += 1;
+                        new_items.push(item);
+                    }
+                }
+            }
+        }
+
+        let list_items = new_items.iter().map(|item| ListItem::from(item));
+
+        let list = List::new(list_items).highlight_style(Style::new().reversed());
+        StatefulWidget::render(list, content_area, buf, &mut self.shop.state);
     }
 }

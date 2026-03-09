@@ -57,6 +57,7 @@ pub enum AppEvent {
     FishCatching,
     FishCaught,
     ChangeRod(Rod),
+    ShowToast(String),
 
     // Chat events
     ChangePlayerName(String),

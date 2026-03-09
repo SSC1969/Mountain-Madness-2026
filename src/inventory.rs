@@ -1,5 +1,6 @@
 pub mod backpack;
 pub mod dex;
+pub mod shop;
 
 use crate::items::ItemTypes;
 

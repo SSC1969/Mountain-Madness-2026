@@ -39,8 +39,7 @@ impl Player {
     pub fn catch_fish(&mut self) -> Fish {
         let fish = Fish::generate();
 
-        self.backpack.add_item(ItemTypes::Fish(fish.clone()));
-        self.dex.add_item(ItemTypes::Fish(fish.clone()));
+        self.add_item(ItemTypes::Fish(fish.clone()));
 
         // 60 tick (2 seconds) timer for the animation to play
         self.fishing_state = FishingState::Catching;
@@ -53,6 +52,12 @@ impl Player {
     pub fn post_catch(&mut self) {
         self.fishing_state = FishingState::Caught;
         self.catch_anim_timer = 60;
+    }
+
+    /// Adds an item to the inventory and registers it to the dex
+    pub fn add_item(&mut self, item: ItemTypes) {
+        self.backpack.add_item(item.clone());
+        self.dex.add_item(item);
     }
 
     /// Updates any relevant counters the player struct uses
@@ -98,7 +103,7 @@ impl Player {
 
         // 2 seconds <-> 10 seconds base rate
         self.ticks_until_next_bite =
-            (rng.random_range(60.0..300.0) * (self.equipped_rod.lure_mult / 100.0)) as u32;
+            (rng.random_range(60.0..300.0) * (100.0 / self.equipped_rod.lure_mult)) as u32;
     }
 
     /// Called to update the player to have a fish biting
