@@ -44,7 +44,7 @@ impl Player {
 
         // 60 tick (2 seconds) timer for the animation to play
         self.fishing_state = FishingState::Catching;
-        self.catch_anim_timer = 60;
+        self.catch_anim_timer = 25;
 
         fish
     }
