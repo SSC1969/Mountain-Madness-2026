@@ -95,16 +95,20 @@ impl Player {
     pub fn cast_rod(&mut self) {
         let mut rng = rand::rng();
         self.fishing_state = FishingState::Idle;
+
+        // 2 seconds <-> 10 seconds base rate
         self.ticks_until_next_bite =
-            (rng.random_range(0.0..300.0) / self.equipped_rod.lure_mult) as u32;
+            (rng.random_range(60.0..300.0) * (self.equipped_rod.lure_mult / 100.0)) as u32;
     }
 
     /// Called to update the player to have a fish biting
     pub fn bite(&mut self) {
         let mut rng = rand::rng();
         self.fishing_state = FishingState::Biting;
+
+        // 2 seconds <-> 5 seconds base rate
         self.ticks_left_in_current_bite =
-            (rng.random_range(60.0..240.0) * self.equipped_rod.hook_strength) as u32;
+            (rng.random_range(60.0..150.0) * self.equipped_rod.hook_strength) as u32;
     }
 
     pub fn equip(&mut self, rod: Rod) {
