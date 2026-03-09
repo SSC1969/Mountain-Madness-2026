@@ -113,7 +113,7 @@ impl Player {
 
         // 2 seconds <-> 5 seconds base rate
         self.ticks_left_in_current_bite =
-            (rng.random_range(60.0..150.0) * self.equipped_rod.hook_strength) as u32;
+            (rng.random_range(60.0..150.0) * (100.0 / self.equipped_rod.hook_strength)) as u32;
     }
 
     pub fn equip(&mut self, rod: Rod) {
