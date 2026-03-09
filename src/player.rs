@@ -122,11 +122,9 @@ impl Player {
 
     pub fn sell(&mut self, index: usize) {
         match &self.backpack.items[index] {
-            ItemTypes::Rod(rod) => {
-                if self.equipped_rod == *rod {
-                    // don't sell the currently equipped rod
-                    return;
-                }
+            ItemTypes::Rod(_) => {
+                // disallow selling rods
+                return;
             }
             _ => {}
         }
