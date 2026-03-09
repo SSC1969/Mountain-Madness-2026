@@ -229,6 +229,15 @@ impl App {
                         }
                     }
                 }
+                KeyCode::Char('s') => {
+                    if let Some(index) = self.backpack_state.selected() {
+                        // grab the translated index from the stored ui index map to use for finding the item in
+                        // the backpack
+                        if let Some(&new_index) = self.player.backpack_ui_map.get(&index) {
+                            self.player.sell(new_index);
+                        }
+                    }
+                }
                 _ => {}
             },
             Menu::Dex => match key_event.code {

@@ -174,6 +174,12 @@ impl App {
                 self.player.catch_anim_timer
             ))
             .title_alignment(Alignment::Left)
+            .title_top(
+                Line::from(format!("${}", self.player.money))
+                    .fg(Color::Green)
+                    .bold()
+                    .right_aligned(),
+            )
             .border_type(BorderType::Rounded)
             .merge_borders(MergeStrategy::Exact);
 
@@ -244,7 +250,7 @@ impl App {
     }
 
     fn render_backpack(&mut self, area: Rect, buf: &mut Buffer, block: Block) {
-        let mut items = self.player.backpack.items.clone();
+        let items = self.player.backpack.items.clone();
 
         let inner = block.inner(area);
         let [tabs_area, content_area] =
@@ -261,13 +267,32 @@ impl App {
             .render(centered_tabs, buf);
 
         // filter the items based on whether the player has fish or tools selected
-        items.retain(|item| match item {
-            ItemTypes::Fish(_) => self.menu_tab == 0,
-            ItemTypes::Rod(_) => self.menu_tab == 1,
-        });
+        let mut new_items = Vec::new();
+        let mut j = 0;
+        for (i, item) in items.into_iter().enumerate() {
+            match item {
+                // add items to the ui list only if it matches the currently selected tab
+                ItemTypes::Fish(_) => {
+                    if self.menu_tab == 0 {
+                        // add a mapping from the elements new index (in the UI list) to it's
+                        // original index (in the player's backpack struct)
+                        self.player.backpack_ui_map.insert(j, i);
+                        j += 1;
+                        new_items.push(item);
+                    }
+                }
+                ItemTypes::Rod(_) => {
+                    if self.menu_tab == 1 {
+                        self.player.backpack_ui_map.insert(j, i);
+                        j += 1;
+                        new_items.push(item);
+                    }
+                }
+            }
+        }
 
-        let list_items = items.iter().map(|item| {
-            // highlight the currently equipped rod
+        // highlight the currently equipped rod
+        let list_items = new_items.iter().map(|item| {
             if let ItemTypes::Rod(rod) = item
                 && *rod == self.player.equipped_rod
             {
@@ -276,6 +301,7 @@ impl App {
                 ListItem::from(item)
             }
         });
+
         let list = List::new(list_items).highlight_style(Style::new().reversed());
         StatefulWidget::render(list, content_area, buf, &mut self.backpack_state);
     }

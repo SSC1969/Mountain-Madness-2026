@@ -1,10 +1,14 @@
+use std::collections::HashMap;
+
 use rand::RngExt;
 
 use crate::inventory::Inventory;
 use crate::inventory::{backpack::Backpack, dex::Dex};
-use crate::items::ItemTypes;
-use crate::items::fish::Fish;
-use crate::items::rod::{RODS, Rod};
+use crate::items::{
+    Item, ItemTypes,
+    fish::Fish,
+    rod::{RODS, Rod},
+};
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub enum FishingState {
@@ -18,13 +22,15 @@ pub enum FishingState {
 pub struct Player {
     pub name: String,
     pub backpack: Backpack,
+    pub backpack_ui_map: HashMap<usize, usize>,
     pub dex: Dex,
+    pub money: i32,
 
     // fish catching variables
     pub equipped_rod: Rod,
     pub fishing_state: FishingState,
-    pub ticks_until_next_bite: u32,
 
+    pub ticks_until_next_bite: u32,
     pub ticks_left_in_current_bite: u32,
     pub catch_anim_timer: u32,
 }
@@ -104,6 +110,20 @@ impl Player {
     pub fn equip(&mut self, rod: Rod) {
         self.equipped_rod = rod;
     }
+
+    pub fn sell(&mut self, index: usize) {
+        match &self.backpack.items[index] {
+            ItemTypes::Rod(rod) => {
+                if self.equipped_rod == *rod {
+                    // don't sell the currently equipped rod
+                    return;
+                }
+            }
+            _ => {}
+        }
+        self.money += self.backpack.items[index].value();
+        self.backpack.items.remove(index);
+    }
 }
 
 impl Default for Player {
@@ -115,7 +135,9 @@ impl Default for Player {
         Self {
             name: "".to_string(),
             backpack,
+            backpack_ui_map: HashMap::default(),
             dex: Dex::default(),
+            money: 0,
             equipped_rod: rod.clone(),
             fishing_state: FishingState::default(),
             ticks_until_next_bite: 0,

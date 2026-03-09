@@ -1,5 +1,5 @@
 use ratatui::{
-    style::Stylize,
+    style::{Color, Stylize},
     text::{Line, Span, Text},
     widgets::ListItem,
 };
@@ -25,7 +25,12 @@ pub trait Item {
 impl<'a> From<&'a ItemTypes> for ListItem<'a> {
     fn from(item: &'a ItemTypes) -> ListItem<'a> {
         let mut text = item.icon();
-        text.extend(vec![" ".into(), item.name().into()]);
+        text.extend(vec![
+            " ".into(),
+            item.name().into(),
+            " ".into(),
+            Span::from(format!("${}", item.value()).fg(Color::Green)),
+        ]);
         let line1 = Line::from(text).bold().underlined();
         let line2 = Line::from(item.info());
 
