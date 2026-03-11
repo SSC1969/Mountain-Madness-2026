@@ -138,7 +138,11 @@ impl App {
 
     pub async fn handle_events(&mut self) -> color_eyre::Result<()> {
         match self.events.next().await? {
-            Event::Tick => self.tick(),
+            Event::Tick => {
+                if self.player.name != "" {
+                    self.tick()
+                }
+            }
             Event::Crossterm(event) => match event {
                 crossterm::event::Event::Key(key_event)
                     if key_event.kind == crossterm::event::KeyEventKind::Press =>
