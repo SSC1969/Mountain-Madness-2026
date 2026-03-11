@@ -147,7 +147,7 @@ impl Default for Player {
             money: 0,
             equipped_rod: rod.clone(),
             fishing_state: FishingState::default(),
-            ticks_until_next_bite: 0,
+            ticks_until_next_bite: 240,
             ticks_left_in_current_bite: 0,
             catch_anim_timer: 0,
         }
