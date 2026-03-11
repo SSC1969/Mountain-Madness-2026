@@ -1,5 +1,11 @@
+use std::{
+    fs::{File, create_dir_all},
+    io::{BufReader, BufWriter, Write},
+};
+
 use crate::{
     chat::ChatHandler,
+    config::get_data_dir,
     event::{AppEvent, Event, EventHandler, NavigationDirection},
     inventory::shop::Shop,
     items::{Item, ItemTypes, fish::Fish},
@@ -103,8 +109,22 @@ pub struct App {
 impl App {
     /// Constructs a new instance of [`App`].
     pub fn new() -> Self {
-        let events = EventHandler::new();
+        let mut events = EventHandler::new();
         let event_tx = events.sender();
+
+        let player = match App::load_game() {
+            Ok(p) => {
+                events.send(AppEvent::ShowToast(vec![(
+                    "Data loaded!".to_string(),
+                    Style::default().fg(Color::Green),
+                )]));
+                p
+            }
+            Err(e) => {
+                print!("Error {e}");
+                Player::default()
+            }
+        };
 
         Self {
             running: true,
@@ -112,7 +132,7 @@ impl App {
             chat: ChatHandler::new(event_tx),
             menu: Menu::default(),
             menu_tab: 0,
-            player: Player::default(),
+            player: player,
             backpack_state: ListState::default(),
             dex_state: ListState::default(),
             toast: Toast::default(),
@@ -120,7 +140,7 @@ impl App {
             shop: Shop::default(),
 
             input: Input::new(std::string::String::from("")),
-            input_mode: InputMode::Editing,
+            input_mode: InputMode::Normal,
             messages: Vec::new(),
             cursor_position: Option::Some((0, 0)),
             anim: Anim::DEFAULT,
@@ -223,7 +243,9 @@ impl App {
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
                 self.events.send(AppEvent::Quit)
             }
-            KeyCode::Char(' ') => self.events.send(AppEvent::FishBiting),
+            KeyCode::Char(' ') => {
+                let _ = self.save_game();
+            }
             KeyCode::Char('t') => self
                 .events
                 .send(AppEvent::ChangeInputMode(InputMode::Editing)),
@@ -333,7 +355,36 @@ impl App {
 
     /// Set running to false to quit the application.
     pub fn quit(&mut self) {
+        //TODO: add proper handling for if saving fails
+        self.save_game().unwrap();
         self.running = false;
+    }
+
+    /// Saves the current game state to a file
+    pub fn save_game(&self) -> color_eyre::Result<()> {
+        let mut data_dir = get_data_dir();
+        create_dir_all(&data_dir)?;
+
+        data_dir.push("player.json");
+
+        let file = File::create(data_dir)?;
+        let mut writer = BufWriter::new(file);
+        serde_json::to_writer_pretty(&mut writer, &self.player)?;
+        writer.flush()?;
+
+        Ok(())
+    }
+
+    /// Loads the game if the data exists
+    pub fn load_game() -> color_eyre::Result<Player> {
+        let mut data_dir = get_data_dir();
+
+        data_dir.push("player.json");
+        let file = File::open(data_dir).unwrap();
+        let reader = BufReader::new(file);
+        let player: Player = serde_json::from_reader(reader).unwrap();
+
+        Ok(player)
     }
 }
 

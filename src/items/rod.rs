@@ -4,7 +4,7 @@ use ratatui::{
     style::{Color, Style, Stylize},
     text::{Line, Span, Text},
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::items::Item;
 
@@ -15,7 +15,7 @@ pub static RODS: LazyLock<Vec<Rod>> = LazyLock::new(|| {
     serde_json::from_str(include_str!("rod.json")).expect("Error deserializing rods!")
 });
 
-#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Rod {
     pub name: String,
     pub value: i32,

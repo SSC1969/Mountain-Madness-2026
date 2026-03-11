@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use rand::RngExt;
+use serde::{Deserialize, Serialize};
 
 use crate::inventory::Inventory;
 use crate::inventory::{backpack::Backpack, dex::Dex};
@@ -10,7 +11,7 @@ use crate::items::{
     rod::{RODS, Rod},
 };
 
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub enum FishingState {
     #[default]
     Idle,
@@ -19,19 +20,25 @@ pub enum FishingState {
     Caught,
 }
 
+#[derive(Deserialize, Serialize)]
 pub struct Player {
     pub name: String,
     pub backpack: Backpack,
+    #[serde(skip)]
     pub backpack_ui_map: HashMap<usize, usize>,
     pub dex: Dex,
     pub money: i32,
 
     // fish catching variables
     pub equipped_rod: Rod,
+    #[serde(skip)]
     pub fishing_state: FishingState,
 
+    #[serde(skip)]
     pub ticks_until_next_bite: u32,
+    #[serde(skip)]
     pub ticks_left_in_current_bite: u32,
+    #[serde(skip)]
     pub catch_anim_timer: u32,
 }
 

@@ -2,6 +2,7 @@ use ratatui::{
     style::Stylize,
     text::{Line, Text},
 };
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
 use std::collections::HashMap;
 
 use crate::{
@@ -13,6 +14,7 @@ use crate::{
     },
 };
 
+#[derive(Serialize, Deserialize)]
 pub struct Dex {
     items: HashMap<String, DexEntries>,
 }
@@ -62,6 +64,7 @@ pub trait DexEntry {
     fn get_lines(&self) -> Text<'_>;
 }
 
+#[derive(Serialize, Deserialize)]
 pub enum DexEntries {
     Fish(FishEntry),
     Rod(Rod),
@@ -82,7 +85,11 @@ impl DexEntry for DexEntries {
         }
     }
 }
+
+#[derive(Serialize, Deserialize)]
 pub struct FishEntry {
+    #[serde(deserialize_with = "deserialize_species_ref")]
+    #[serde(serialize_with = "serialize_species_ref")]
     species: &'static Species,
     count: u32,
     total_value: i32,
@@ -169,5 +176,23 @@ impl DexEntry for Rod {
 
             vec![l1, l2]
         })
+    }
+}
+
+fn serialize_species_ref<S>(spec: &'static Species, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    s.serialize_str(&spec.name)
+}
+
+fn deserialize_species_ref<'de, D>(deserializer: D) -> Result<&'static Species, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: String = Deserialize::deserialize(deserializer)?;
+    match SPECIES.iter().find(|&spec| spec.name == s) {
+        Some(spec) => Ok(spec),
+        None => Err(D::Error::custom("Error deserializing species!")),
     }
 }

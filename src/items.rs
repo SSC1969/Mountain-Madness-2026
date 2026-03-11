@@ -3,13 +3,14 @@ use ratatui::{
     text::{Line, Span, Text},
     widgets::ListItem,
 };
+use serde::{Deserialize, Serialize};
 
 use crate::items::{fish::Fish, rod::Rod};
 
 pub mod fish;
 pub mod rod;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum ItemTypes {
     Fish(Fish),
     Rod(Rod),

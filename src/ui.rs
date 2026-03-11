@@ -112,6 +112,7 @@ impl Widget for &mut App {
 
 impl App {
     fn show_name_prompt(&mut self, area: Rect, buf: &mut Buffer) {
+        self.input_mode = InputMode::Editing;
         let width = area.width.max(3) - 3;
         let scroll = self.input.visual_scroll(width as usize);
 
