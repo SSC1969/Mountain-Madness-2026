@@ -28,6 +28,11 @@ pub enum Menu {
     Options,
 }
 
+/// The frequency at which tick events are emitted (ticks per second)
+pub const TICK_FPS: f64 = 30.0;
+
+/// How often the game will save
+const AUTOSAVE_INTERVAL: u32 = 60 * TICK_FPS as u32;
 pub const MENU_SIZE: i32 = 4;
 
 impl Menu {
@@ -91,9 +96,10 @@ pub struct App {
     pub dex_state: ListState,
     /// Struct used to display messages like notifications
     pub toast: Toast,
-
     /// Shop struct
     pub shop: Shop,
+    /// Timer to determine when to autosave
+    pub autosave_timer: u32,
 
     pub input: Input,
     // Whether the chatbox is open or not
@@ -139,6 +145,7 @@ impl App {
             toast: Toast::default(),
 
             shop: Shop::default(),
+            autosave_timer: AUTOSAVE_INTERVAL,
 
             input: Input::new(std::string::String::from("")),
             input_mode: InputMode::Normal,
@@ -175,6 +182,14 @@ impl App {
             },
             Event::App(app_event) => match app_event {
                 AppEvent::Quit => self.quit(),
+                AppEvent::Save => {
+                    if let Err(e) = self.save_game() {
+                        self.events.send(AppEvent::ShowToast(vec![(
+                            format!("Error saving game: {e}"),
+                            Style::default().fg(Color::Red),
+                        )]));
+                    }
+                }
                 AppEvent::ChangeMenu(menu) => self.menu = menu,
                 AppEvent::Navigate(dir) => match dir {
                     NavigationDirection::Left => self.menu = self.menu.prev(),
@@ -326,7 +341,7 @@ impl App {
                 Style::default(),
             )]));
             self.player.add_item(item);
-            let _ = self.save_game();
+            self.events.send(AppEvent::Save);
         } else {
             self.events.send(AppEvent::ShowToast(vec![(
                 "Can't afford that!".to_string(),
@@ -342,6 +357,10 @@ impl App {
     pub fn tick(&mut self) {
         self.player.tick();
         self.toast.tick();
+        self.autosave_timer = self.autosave_timer.saturating_sub(1);
+        if self.autosave_timer <= 0 {
+            self.events.send(AppEvent::Save);
+        }
 
         // Update animation based on the player's state
         self.anim = match self.player.fishing_state {
@@ -354,7 +373,6 @@ impl App {
 
     /// Set running to false to quit the application.
     pub fn quit(&mut self) {
-        //TODO: add proper handling for if saving fails
         if let Ok(_) = self.save_game() {
             self.running = false;
         } else {
@@ -366,7 +384,7 @@ impl App {
     }
 
     /// Saves the current game state to a file
-    pub fn save_game(&self) -> color_eyre::Result<()> {
+    pub fn save_game(&mut self) -> color_eyre::Result<()> {
         let mut data_dir = get_data_dir();
         create_dir_all(&data_dir)?;
 
@@ -377,6 +395,9 @@ impl App {
         serde_json::to_writer_pretty(&mut writer, &self.player)?;
         writer.flush()?;
 
+        // reset the autosave timer
+        self.autosave_timer = AUTOSAVE_INTERVAL;
+
         Ok(())
     }
 
@@ -385,9 +406,9 @@ impl App {
         let mut data_dir = get_data_dir();
 
         data_dir.push("player.json");
-        let file = File::open(data_dir).unwrap();
+        let file = File::open(data_dir)?;
         let reader = BufReader::new(file);
-        let player: Player = serde_json::from_reader(reader).unwrap();
+        let player: Player = serde_json::from_reader(reader)?;
 
         Ok(player)
     }
