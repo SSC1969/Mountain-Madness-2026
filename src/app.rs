@@ -326,6 +326,7 @@ impl App {
                 Style::default(),
             )]));
             self.player.add_item(item);
+            let _ = self.save_game();
         } else {
             self.events.send(AppEvent::ShowToast(vec![(
                 "Can't afford that!".to_string(),
@@ -354,8 +355,14 @@ impl App {
     /// Set running to false to quit the application.
     pub fn quit(&mut self) {
         //TODO: add proper handling for if saving fails
-        self.save_game().unwrap();
-        self.running = false;
+        if let Ok(_) = self.save_game() {
+            self.running = false;
+        } else {
+            self.events.send(AppEvent::ShowToast(vec![(
+                "Error saving game! Please try again!".to_string(),
+                Style::default().fg(Color::Red),
+            )]))
+        }
     }
 
     /// Saves the current game state to a file
