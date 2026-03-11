@@ -113,11 +113,12 @@ impl App {
         let event_tx = events.sender();
 
         let player = match App::load_game() {
-            Ok(p) => {
+            Ok(mut p) => {
                 events.send(AppEvent::ShowToast(vec![(
                     "Data loaded!".to_string(),
                     Style::default().fg(Color::Green),
                 )]));
+                p.ticks_until_next_bite = 120;
                 p
             }
             Err(e) => {
@@ -242,9 +243,6 @@ impl App {
             KeyCode::Esc | KeyCode::Char('q') => self.events.send(AppEvent::Quit),
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
                 self.events.send(AppEvent::Quit)
-            }
-            KeyCode::Char(' ') => {
-                let _ = self.save_game();
             }
             KeyCode::Char('t') => self
                 .events
