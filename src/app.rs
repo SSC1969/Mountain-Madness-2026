@@ -7,7 +7,7 @@ use crate::{
     chat::ChatHandler,
     config::get_data_dir,
     event::{AppEvent, Event, EventHandler, NavigationDirection},
-    inventory::shop::Shop,
+    inventory::{Inventory, shop::Shop},
     items::{Item, ItemTypes, fish::Fish},
     player::{FishingState, Player},
 };
@@ -133,6 +133,12 @@ impl App {
             }
         };
 
+        // remove any tools from the shop if the player already owns them
+        let mut shop = Shop::default();
+        for item in &player.backpack.items {
+            shop.remove_item(item.clone());
+        }
+
         Self {
             running: true,
             events,
@@ -144,7 +150,7 @@ impl App {
             dex_state: ListState::default(),
             toast: Toast::default(),
 
-            shop: Shop::default(),
+            shop: shop,
             autosave_timer: AUTOSAVE_INTERVAL,
 
             input: Input::new(std::string::String::from("")),
