@@ -87,8 +87,8 @@ impl Item for Fish {
         format!("{}g | {}cm - {:?}", self.weight, self.length, self.quality)
     }
 
-    fn icon(&self) -> Span<'_> {
-        self.species.icon()
+    fn icon(&self) -> Vec<Span<'_>> {
+        vec![self.species.icon()]
     }
 }
 

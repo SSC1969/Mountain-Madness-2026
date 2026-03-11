@@ -2,36 +2,32 @@ use crate::{
     inventory::Inventory,
     items::{Item, ItemTypes},
 };
-use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct Backpack {
-    pub items: HashMap<String, Vec<ItemTypes>>,
+    pub items: Vec<ItemTypes>,
 }
 
 impl Backpack {
     pub fn search(&self, name: String) -> Vec<ItemTypes> {
-        let found = self.items.get(&name);
-        return match found {
-            Some(vec) => vec.to_vec(),
-            None => Vec::new(),
-        };
+        self.items
+            .iter()
+            .filter(|item| item.name() == name)
+            .cloned()
+            .collect()
     }
 
     pub fn get_all(&self) -> Vec<ItemTypes> {
-        let vecs = self.items.values().cloned();
-        vecs.flatten().collect()
+        self.items.clone()
     }
 }
 
 impl Inventory for Backpack {
     fn add_item(&mut self, item: ItemTypes) {
-        let vec = self.items.entry(item.name()).or_default();
-        vec.push(item);
+        self.items.push(item);
     }
 
     fn remove_item(&mut self, item: ItemTypes) {
-        let vec = self.items.entry(item.name()).or_default();
-        vec.remove(vec.iter().position(|x| *x == item).unwrap());
+        self.items.retain(|x| *x != item);
     }
 }

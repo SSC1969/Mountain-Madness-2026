@@ -58,17 +58,18 @@ static CAUGHT_FRAME: &str = r#"
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Flex, Layout, Rect, Spacing},
-    style::{Color, Style},
+    style::{Color, Style, Stylize},
     symbols::merge::MergeStrategy,
     text::Line,
     widgets::{
-        Block, BorderType, Clear, List, ListItem, Padding, Paragraph, StatefulWidget, Widget,
+        Block, BorderType, Clear, List, ListItem, Padding, Paragraph, StatefulWidget, Tabs, Widget,
     },
 };
 
 use crate::{
     app::{Anim, App, InputMode, MENU_SIZE, Menu},
-    items::Item,
+    inventory::dex::{DexEntries, DexEntry},
+    items::{Item, ItemTypes},
 };
 
 impl Widget for &mut App {
@@ -82,10 +83,9 @@ impl Widget for &mut App {
         let [main, toolbar] = Layout::vertical([Constraint::Fill(1), Constraint::Max(3)])
             .spacing(Spacing::Overlap(1))
             .areas(area);
-        let [viewport, menu] =
-            Layout::horizontal([Constraint::Fill(1), Constraint::Percentage(25)])
-                .spacing(Spacing::Overlap(1))
-                .areas(main);
+        let [viewport, menu] = Layout::horizontal([Constraint::Fill(1), Constraint::Length(31)])
+            .spacing(Spacing::Overlap(1))
+            .areas(main);
 
         let [_, viewport_bottom] =
             Layout::vertical([Constraint::Fill(1), Constraint::Max(8)]).areas(viewport);
@@ -174,8 +174,16 @@ impl App {
                 self.player.catch_anim_timer
             ))
             .title_alignment(Alignment::Left)
+            .title_top(
+                Line::from(format!("${}", self.player.money))
+                    .fg(Color::Green)
+                    .bold()
+                    .right_aligned(),
+            )
             .border_type(BorderType::Rounded)
             .merge_borders(MergeStrategy::Exact);
+
+        let inner = block.inner(area);
 
         let mut x = 0;
         let mut y = 0;
@@ -197,8 +205,19 @@ impl App {
         Paragraph::new(frame).block(block).render(area, buf);
 
         if let Some(fish) = &self.recent_catch {
-            let icon = fish.icon();
-            buf.set_span(x, y, &icon, icon.width() as u16);
+            let icon = Line::from(fish.icon());
+            buf.set_line(x, y, &icon, icon.width() as u16);
+        }
+
+        // render toast, if applicable
+        if self.toast.timer > 0 {
+            let [_, toast_area] =
+                Layout::vertical(vec![Constraint::Fill(1), Constraint::Percentage(15)])
+                    .areas(inner);
+            Paragraph::new(self.toast.message.clone())
+                .left_aligned()
+                .bold()
+                .render(toast_area, buf);
         }
     }
 
@@ -213,9 +232,11 @@ impl App {
             .flex(Flex::Center)
             .split(inner);
 
-        Line::from("<h> Home").centered().render(layout[0], buf);
-        Line::from("<b> Backpack").centered().render(layout[1], buf);
-        Line::from("<d> Dex").centered().render(layout[2], buf);
+        Line::from("<b> Backpack").centered().render(layout[0], buf);
+        Line::from("<p> Fincyclopedia")
+            .centered()
+            .render(layout[1], buf);
+        Line::from("<m> Market").centered().render(layout[2], buf);
         Line::from("<o> Options").centered().render(layout[3], buf);
 
         block.render(area, buf);
@@ -230,40 +251,166 @@ impl App {
             .padding(Padding::horizontal(1));
 
         match self.menu {
-            Menu::Home => Paragraph::new("Home")
-                .centered()
-                .block(block)
-                .render(area, buf),
-            Menu::Backpack => {
-                let list_items = self
-                    .player
-                    .backpack
-                    .items
-                    .values()
-                    .map(|set| set.iter())
-                    .flatten()
-                    .map(|item| ListItem::from(item));
-                let list = List::new(list_items)
-                    .highlight_style(Style::new().reversed())
-                    .block(block);
-                StatefulWidget::render(list, area, buf, &mut self.backpack_state);
-            }
-            Menu::Dex => {
-                let list_items = self
-                    .player
-                    .dex
-                    .get_all()
-                    .into_iter()
-                    .map(|entry| ListItem::from(entry));
-                let list = List::new(list_items)
-                    .highlight_style(Style::new().reversed())
-                    .block(block);
-                StatefulWidget::render(list, area, buf, &mut self.dex_state);
-            }
+            Menu::Backpack => self.render_backpack(area, buf, block),
+            Menu::Fincyclopedia => self.render_dex(area, buf, block),
+            Menu::Market => self.render_shop(area, buf, block),
             Menu::Options => Paragraph::new("Options")
                 .centered()
                 .block(block)
                 .render(area, buf),
         }
+    }
+
+    fn render_backpack(&mut self, area: Rect, buf: &mut Buffer, block: Block) {
+        let items = self.player.backpack.items.clone();
+
+        let inner = block.inner(area);
+        let [tabs_area, content_area, controls_area] = Layout::vertical(vec![
+            Constraint::Length(1),
+            Constraint::Min(0),
+            Constraint::Length(1),
+        ])
+        .areas(inner);
+
+        block.render(area, buf);
+
+        Paragraph::new("⮁ move <s> sell ⏎ equip").render(controls_area, buf);
+
+        let [centered_tabs] = Layout::horizontal(vec![Constraint::Length(13)])
+            .flex(Flex::Center)
+            .areas(tabs_area);
+        Tabs::new(vec!["Fish", "Tools"])
+            .bold()
+            .select(self.menu_tab as usize)
+            .render(centered_tabs, buf);
+
+        // filter the items based on whether the player has fish or tools selected
+        let mut new_items = Vec::new();
+        let mut j = 0;
+        for (i, item) in items.into_iter().enumerate() {
+            match item {
+                // add items to the ui list only if it matches the currently selected tab
+                ItemTypes::Fish(_) => {
+                    if self.menu_tab == 0 {
+                        // add a mapping from the elements new index (in the UI list) to it's
+                        // original index (in the player's backpack struct)
+                        self.player.backpack_ui_map.insert(j, i);
+                        j += 1;
+                        new_items.push(item);
+                    }
+                }
+                ItemTypes::Rod(_) => {
+                    if self.menu_tab == 1 {
+                        self.player.backpack_ui_map.insert(j, i);
+                        j += 1;
+                        new_items.push(item);
+                    }
+                }
+            }
+        }
+
+        // highlight the currently equipped rod
+        let list_items = new_items.iter().map(|item| {
+            if let ItemTypes::Rod(rod) = item
+                && *rod == self.player.equipped_rod
+            {
+                ListItem::from(rod.equipped_lines())
+            } else {
+                ListItem::from(item)
+            }
+        });
+
+        let list = List::new(list_items).highlight_style(Style::new().reversed());
+        StatefulWidget::render(list, content_area, buf, &mut self.backpack_state);
+    }
+
+    fn render_dex(&mut self, area: Rect, buf: &mut Buffer, block: Block) {
+        let mut items = self.player.dex.get_all();
+
+        let inner = block.inner(area);
+        let [tabs_area, content_area, controls_area] = Layout::vertical(vec![
+            Constraint::Length(1),
+            Constraint::Min(0),
+            Constraint::Length(1),
+        ])
+        .areas(inner);
+
+        block.render(area, buf);
+
+        Paragraph::new("⮁ navigate").render(controls_area, buf);
+
+        let [centered_tabs] = Layout::horizontal(vec![Constraint::Length(13)])
+            .flex(Flex::Center)
+            .areas(tabs_area);
+        Tabs::new(vec!["Fish", "Tools"])
+            .bold()
+            .select(self.menu_tab as usize)
+            .render(centered_tabs, buf);
+
+        // filter the items based on whether the player has fish or tools selected
+        items.retain(|item| match item {
+            DexEntries::Fish(_) => self.menu_tab == 0,
+            DexEntries::Rod(_) => self.menu_tab == 1,
+        });
+
+        let list_items = items
+            .into_iter()
+            .map(|entry| ListItem::from(entry.get_lines()));
+
+        let list = List::new(list_items).highlight_style(Style::new().reversed());
+        StatefulWidget::render(list, content_area, buf, &mut self.dex_state);
+    }
+
+    fn render_shop(&mut self, area: Rect, buf: &mut Buffer, block: Block) {
+        let inner = block.inner(area);
+        let [tabs_area, content_area, controls_area] = Layout::vertical(vec![
+            Constraint::Length(1),
+            Constraint::Min(0),
+            Constraint::Length(1),
+        ])
+        .areas(inner);
+        block.render(area, buf);
+
+        Paragraph::new("⮁ navigate, ⏎ buy").render(controls_area, buf);
+
+        let items = self.shop.get_available();
+
+        let [centered_tabs] = Layout::horizontal(vec![Constraint::Length(13)])
+            .flex(Flex::Center)
+            .areas(tabs_area);
+        Tabs::new(vec!["Fish", "Tools"])
+            .bold()
+            .select(self.menu_tab as usize)
+            .render(centered_tabs, buf);
+
+        // filter the items based on whether the player has fish or tools selected
+        let mut new_items = Vec::new();
+        let mut j = 0;
+        for (i, item) in items.into_iter().enumerate() {
+            match item {
+                // add items to the ui list only if it matches the currently selected tab
+                ItemTypes::Fish(_) => {
+                    if self.menu_tab == 0 {
+                        // add a mapping from the elements new index (in the UI list) to it's
+                        // original index (in the shop struct)
+                        self.shop.ui_index_map.insert(j, i);
+                        j += 1;
+                        new_items.push(item);
+                    }
+                }
+                ItemTypes::Rod(_) => {
+                    if self.menu_tab == 1 {
+                        self.shop.ui_index_map.insert(j, i);
+                        j += 1;
+                        new_items.push(item);
+                    }
+                }
+            }
+        }
+
+        let list_items = new_items.iter().map(|item| ListItem::from(item));
+
+        let list = List::new(list_items).highlight_style(Style::new().reversed());
+        StatefulWidget::render(list, content_area, buf, &mut self.shop.state);
     }
 }

@@ -1,7 +1,6 @@
 use ratatui::{
     style::Stylize,
     text::{Line, Text},
-    widgets::ListItem,
 };
 use std::collections::HashMap;
 
@@ -10,6 +9,7 @@ use crate::{
     items::{
         Item, ItemTypes,
         fish::{SPECIES, Species},
+        rod::{RODS, Rod},
     },
 };
 
@@ -37,6 +37,9 @@ impl Default for Dex {
         for spec in SPECIES.iter() {
             items.insert(spec.name.clone(), DexEntries::Fish(FishEntry::new(spec)));
         }
+        for rod in RODS.iter() {
+            items.insert(rod.name.clone(), DexEntries::Rod(rod.clone()));
+        }
         Self { items }
     }
 }
@@ -56,23 +59,26 @@ pub trait DexEntry {
     /// Updates this entry based on the newly passed in item
     fn update(&mut self, item: ItemTypes);
     /// Gets the display text for this entry
-    fn get_lines(&'_ self) -> [Line<'_>; 3];
+    fn get_lines(&self) -> Text<'_>;
 }
 
 pub enum DexEntries {
     Fish(FishEntry),
+    Rod(Rod),
 }
 
 impl DexEntry for DexEntries {
     fn update(&mut self, item: ItemTypes) {
         match self {
             DexEntries::Fish(entry) => entry.update(item),
+            DexEntries::Rod(entry) => entry.update(item),
         }
     }
 
-    fn get_lines(&'_ self) -> [Line<'_>; 3] {
+    fn get_lines(&self) -> Text<'_> {
         match self {
             DexEntries::Fish(entry) => entry.get_lines(),
+            DexEntries::Rod(entry) => entry.get_lines(),
         }
     }
 }
@@ -109,34 +115,59 @@ impl DexEntry for FishEntry {
         }
     }
 
-    fn get_lines(&'_ self) -> [Line<'_>; 3] {
-        let l1 = Line::from(vec![
-            self.species.icon(),
-            " ".into(),
-            self.species.name.clone().into(),
-        ])
-        .bold()
-        .underlined();
+    fn get_lines(&self) -> Text<'_> {
+        Text::from({
+            if self.count <= 0 {
+                vec![
+                    Line::from("???").bold().underlined(),
+                    "Not discovered yet!".into(),
+                ]
+            } else {
+                let l1 = Line::from(vec![
+                    self.species.icon(),
+                    " ".into(),
+                    self.species.name.clone().into(),
+                ])
+                .bold()
+                .underlined();
 
-        let l2 = Line::from(vec![
-            format!("Caught: {}(${})", self.count, self.total_value,).into(),
-        ]);
+                let l2 = Line::from(vec![
+                    format!("Caught: {}(${})", self.count, self.total_value,).into(),
+                ]);
 
-        let l3 = Line::from(vec![
-            format!(
-                "Best: {}cm | {}g | ${}",
-                self.largest, self.heaviest, self.highest_value
-            )
-            .into(),
-        ]);
+                let l3 = Line::from(vec![
+                    format!(
+                        "Best: {}cm | {}g | ${}",
+                        self.largest, self.heaviest, self.highest_value
+                    )
+                    .into(),
+                ]);
 
-        [l1, l2, l3]
+                vec![l1, l2, l3]
+            }
+        })
     }
 }
 
-impl<'a> From<&'a DexEntries> for ListItem<'a> {
-    fn from(entry: &'a DexEntries) -> Self {
-        let [l1, l2, l3] = entry.get_lines();
-        ListItem::new(Text::from(vec![l1, l2, l3]))
+impl DexEntry for Rod {
+    fn update(&mut self, item: ItemTypes) {
+        if let ItemTypes::Rod(rod) = item {
+            *self = Rod { ..rod };
+        }
+    }
+
+    fn get_lines(&self) -> Text<'_> {
+        Text::from({
+            let mut vec = self.icon();
+            vec.extend([" ".into(), self.name().into()]);
+            let l1 = Line::from(vec).bold().underlined();
+
+            let l2 = Line::from(format!(
+                "Lure: {} | Hook: {}",
+                self.lure_mult, self.hook_strength
+            ));
+
+            vec![l1, l2]
+        })
     }
 }

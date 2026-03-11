@@ -4,7 +4,10 @@ use futures::{FutureExt, StreamExt};
 use std::time::Duration;
 use tokio::sync::mpsc;
 
-use crate::app::{InputMode, Menu};
+use crate::{
+    app::{InputMode, Menu},
+    items::rod::Rod,
+};
 
 /// The frequency at which tick events are emitted.
 const TICK_FPS: f64 = 30.0;
@@ -44,21 +47,22 @@ pub enum AppEvent {
     /// Quit the application.
     Quit,
 
-    /// Navigate/navigate
+    // Menu events
     Navigate(NavigationDirection),
-
-    /// Change menus
     ChangeMenu(Menu),
 
+    // Player events
     CastRod,
     FishBiting,
     FishCatching,
     FishCaught,
+    ChangeRod(Rod),
+    ShowToast(String),
 
+    // Chat events
     ChangePlayerName(String),
     ChangeInputMode(InputMode),
     SendChat(String),
-
     MessageReceived(String),
 }
 

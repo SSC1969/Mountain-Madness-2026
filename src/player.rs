@@ -1,9 +1,14 @@
+use std::collections::HashMap;
+
 use rand::RngExt;
 
 use crate::inventory::Inventory;
 use crate::inventory::{backpack::Backpack, dex::Dex};
-use crate::items::ItemTypes;
-use crate::items::fish::Fish;
+use crate::items::{
+    Item, ItemTypes,
+    fish::Fish,
+    rod::{RODS, Rod},
+};
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub enum FishingState {
@@ -14,16 +19,18 @@ pub enum FishingState {
     Caught,
 }
 
-#[derive(Default)]
 pub struct Player {
     pub name: String,
     pub backpack: Backpack,
+    pub backpack_ui_map: HashMap<usize, usize>,
     pub dex: Dex,
+    pub money: i32,
 
     // fish catching variables
+    pub equipped_rod: Rod,
     pub fishing_state: FishingState,
-    pub ticks_until_next_bite: u32,
 
+    pub ticks_until_next_bite: u32,
     pub ticks_left_in_current_bite: u32,
     pub catch_anim_timer: u32,
 }
@@ -32,12 +39,11 @@ impl Player {
     pub fn catch_fish(&mut self) -> Fish {
         let fish = Fish::generate();
 
-        self.backpack.add_item(ItemTypes::Fish(fish.clone()));
-        self.dex.add_item(ItemTypes::Fish(fish.clone()));
+        self.add_item(ItemTypes::Fish(fish.clone()));
 
         // 60 tick (2 seconds) timer for the animation to play
         self.fishing_state = FishingState::Catching;
-        self.catch_anim_timer = 60;
+        self.catch_anim_timer = 25;
 
         fish
     }
@@ -46,6 +52,12 @@ impl Player {
     pub fn post_catch(&mut self) {
         self.fishing_state = FishingState::Caught;
         self.catch_anim_timer = 60;
+    }
+
+    /// Adds an item to the inventory and registers it to the dex
+    pub fn add_item(&mut self, item: ItemTypes) {
+        self.backpack.add_item(item.clone());
+        self.dex.add_item(item);
     }
 
     /// Updates any relevant counters the player struct uses
@@ -88,14 +100,57 @@ impl Player {
     pub fn cast_rod(&mut self) {
         let mut rng = rand::rng();
         self.fishing_state = FishingState::Idle;
-        self.ticks_until_next_bite = rng.random_range(..300);
+
+        // 2 seconds <-> 10 seconds base rate
+        self.ticks_until_next_bite =
+            (rng.random_range(60.0..300.0) * (100.0 / self.equipped_rod.lure_mult)) as u32;
     }
 
     /// Called to update the player to have a fish biting
     pub fn bite(&mut self) {
         let mut rng = rand::rng();
         self.fishing_state = FishingState::Biting;
-        self.ticks_left_in_current_bite = rng.random_range(60..240);
+
+        // 2 seconds <-> 5 seconds base rate
+        self.ticks_left_in_current_bite =
+            (rng.random_range(60.0..150.0) * (100.0 / self.equipped_rod.hook_strength)) as u32;
+    }
+
+    pub fn equip(&mut self, rod: Rod) {
+        self.equipped_rod = rod;
+    }
+
+    pub fn sell(&mut self, index: usize) {
+        match &self.backpack.items[index] {
+            ItemTypes::Rod(_) => {
+                // disallow selling rods
+                return;
+            }
+            _ => {}
+        }
+        self.money += self.backpack.items[index].value();
+        self.backpack.items.remove(index);
+    }
+}
+
+impl Default for Player {
+    fn default() -> Self {
+        let mut backpack = Backpack::default();
+        let rod = &RODS[0];
+        // Add any items the player should start with here
+        backpack.add_item(ItemTypes::Rod(rod.clone()));
+        Self {
+            name: "".to_string(),
+            backpack,
+            backpack_ui_map: HashMap::default(),
+            dex: Dex::default(),
+            money: 0,
+            equipped_rod: rod.clone(),
+            fishing_state: FishingState::default(),
+            ticks_until_next_bite: 0,
+            ticks_left_in_current_bite: 0,
+            catch_anim_timer: 0,
+        }
     }
 }
 
@@ -107,6 +162,7 @@ mod tests {
     fn test_catch_fish() {
         let mut p = Player::default();
         p.catch_fish();
-        assert!(p.backpack.get_all().len() == 1)
+        // should be two, as by default the player will have one item (the average rod)
+        assert_eq!(p.backpack.get_all().len(), 2);
     }
 }
