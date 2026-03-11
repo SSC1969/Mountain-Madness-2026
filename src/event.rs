@@ -1,6 +1,7 @@
 use color_eyre::eyre::OptionExt;
 use crossterm::event::Event as CrosstermEvent;
 use futures::{FutureExt, StreamExt};
+use ratatui::style::Style;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
@@ -57,7 +58,7 @@ pub enum AppEvent {
     FishCatching,
     FishCaught,
     ChangeRod(Rod),
-    ShowToast(String),
+    ShowToast(Vec<(String, Style)>),
 
     // Chat events
     ChangePlayerName(String),

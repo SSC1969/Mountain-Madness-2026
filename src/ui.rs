@@ -60,7 +60,7 @@ use ratatui::{
     layout::{Alignment, Constraint, Flex, Layout, Rect, Spacing},
     style::{Color, Style, Stylize},
     symbols::merge::MergeStrategy,
-    text::Line,
+    text::{Line, Span},
     widgets::{
         Block, BorderType, Clear, List, ListItem, Padding, Paragraph, StatefulWidget, Tabs, Widget,
     },
@@ -211,11 +211,17 @@ impl App {
 
         // render toast, if applicable
         if self.toast.timer > 0 {
-            let [_, toast_area] =
-                Layout::vertical(vec![Constraint::Fill(1), Constraint::Percentage(15)])
+            let [toast_area, _] =
+                Layout::vertical(vec![Constraint::Percentage(15), Constraint::Fill(1)])
                     .areas(inner);
-            Paragraph::new(self.toast.message.clone())
-                .left_aligned()
+            let spans: Vec<_> = self
+                .toast
+                .message
+                .iter()
+                .map(|(p, s)| Span::styled(p, *s))
+                .collect();
+            Paragraph::new(Line::from(spans))
+                .right_aligned()
                 .bold()
                 .render(toast_area, buf);
         }

@@ -6,7 +6,11 @@ use crate::{
     player::{FishingState, Player},
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use ratatui::{DefaultTerminal, widgets::ListState};
+use ratatui::{
+    DefaultTerminal,
+    style::{Color, Style},
+    widgets::ListState,
+};
 use tui_input::{Input, backend::crossterm::EventHandler as crosstermEventHandler};
 
 #[derive(Clone, Default, Debug)]
@@ -56,7 +60,7 @@ pub enum InputMode {
 
 #[derive(Default)]
 pub struct Toast {
-    pub message: String,
+    pub message: Vec<(String, Style)>,
     pub timer: u32,
 }
 
@@ -292,12 +296,16 @@ impl App {
     /// Handles purchasing an item from the shop based on it's true index
     fn buy_item(&mut self, index: usize) {
         if let Some(item) = self.shop.sell_item(index, self.player.money) {
-            self.events
-                .send(AppEvent::ShowToast(format!("Purchased {}", item.name())));
+            self.events.send(AppEvent::ShowToast(vec![(
+                format!("Purchased {}", item.name()),
+                Style::default(),
+            )]));
             self.player.add_item(item);
         } else {
-            self.events
-                .send(AppEvent::ShowToast("Can't afford that!".to_string()));
+            self.events.send(AppEvent::ShowToast(vec![(
+                "Can't afford that!".to_string(),
+                Style::default().fg(Color::Red),
+            )]));
         }
     }
 
@@ -325,7 +333,7 @@ impl App {
 }
 
 impl Toast {
-    fn start(&mut self, msg: String) {
+    fn start(&mut self, msg: Vec<(String, Style)>) {
         self.message = msg;
         self.timer = 150;
     }
