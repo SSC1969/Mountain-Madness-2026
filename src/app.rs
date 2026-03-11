@@ -44,6 +44,7 @@ impl Menu {
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub enum Anim {
     DEFAULT,
     BITING,

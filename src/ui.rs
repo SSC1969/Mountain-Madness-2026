@@ -185,6 +185,7 @@ impl App {
 
         let inner = block.inner(area);
 
+        // render animation frame
         let mut x = 0;
         let mut y = 0;
         let frame = match self.anim {
@@ -204,9 +205,12 @@ impl App {
 
         Paragraph::new(frame).block(block).render(area, buf);
 
+        // display the fish only if the current animation requires it
         if let Some(fish) = &self.recent_catch {
-            let icon = Line::from(fish.icon());
-            buf.set_line(x, y, &icon, icon.width() as u16);
+            if self.anim == Anim::CATCHING || self.anim == Anim::CAUGHT {
+                let icon = Line::from(fish.icon());
+                buf.set_line(x, y, &icon, icon.width() as u16);
+            }
         }
 
         // render toast, if applicable
