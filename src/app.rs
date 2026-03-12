@@ -1,6 +1,7 @@
 use std::{
     fs::{File, create_dir_all},
     io::{BufReader, BufWriter, Write},
+    path::PathBuf,
 };
 
 use crate::{
@@ -17,9 +18,10 @@ use ratatui::{
     style::{Color, Style},
     widgets::ListState,
 };
+use strum::EnumCount;
 use tui_input::{Input, backend::crossterm::EventHandler as crosstermEventHandler};
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, EnumCount)]
 pub enum Menu {
     #[default]
     Backpack,
@@ -33,7 +35,6 @@ pub const TICK_FPS: f64 = 30.0;
 
 /// How often the game will save
 const AUTOSAVE_INTERVAL: u32 = 60 * TICK_FPS as u32;
-pub const MENU_SIZE: i32 = 4;
 
 impl Menu {
     fn next(&self) -> Self {
@@ -391,14 +392,14 @@ impl App {
 
     /// Saves the current game state to a file
     pub fn save_game(&mut self) -> color_eyre::Result<()> {
-        let mut data_dir = get_data_dir();
+        let mut data_dir: PathBuf = get_data_dir();
         create_dir_all(&data_dir)?;
 
-        data_dir.push("player.json");
+        data_dir.push("player.dat");
 
-        let file = File::create(data_dir)?;
-        let mut writer = BufWriter::new(file);
-        serde_json::to_writer_pretty(&mut writer, &self.player)?;
+        let file: File = File::create(data_dir)?;
+        let mut writer: BufWriter<File> = BufWriter::new(file);
+        rmp_serde::encode::write(&mut writer, &self.player)?;
         writer.flush()?;
 
         // reset the autosave timer
@@ -409,12 +410,12 @@ impl App {
 
     /// Loads the game if the data exists
     pub fn load_game() -> color_eyre::Result<Player> {
-        let mut data_dir = get_data_dir();
+        let mut data_dir: PathBuf = get_data_dir();
 
-        data_dir.push("player.json");
-        let file = File::open(data_dir)?;
-        let reader = BufReader::new(file);
-        let player: Player = serde_json::from_reader(reader)?;
+        data_dir.push("player.dat");
+        let file: File = File::open(data_dir)?;
+        let reader: BufReader<File> = BufReader::new(file);
+        let player: Player = rmp_serde::from_read(reader)?;
 
         Ok(player)
     }

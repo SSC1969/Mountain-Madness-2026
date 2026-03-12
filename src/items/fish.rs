@@ -7,7 +7,7 @@ use ratatui::{
     style::{Color, Style},
     text::Span,
 };
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
 use strum::{EnumIter, EnumProperty, IntoEnumIterator, VariantArray};
 
 use crate::items::Item;
@@ -20,51 +20,24 @@ pub static SPECIES: LazyLock<Vec<Species>> = LazyLock::new({
 });
 
 //TODO: convert from u32 to float
-#[derive(Default, Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Fish {
-    pub species: Species,
+    pub species: SpeciesRef,
     pub length: u32,
     pub weight: u32,
     pub quality: FishQuality,
 }
 
-#[derive(Default, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy, EnumIter, Serialize)]
-pub enum SpeciesRarity {
-    #[default]
-    Common,
-    Rare,
-    Epic,
-    Legendary,
-}
-
-#[derive(
-    PartialEq, Eq, Debug, Hash, Clone, VariantArray, EnumProperty, EnumIter, Serialize, Deserialize,
-)]
-pub enum FishQuality {
-    #[strum(props(w = 50))]
-    Shoddy,
-    #[strum(props(w = 40))]
-    Mediocre,
-    #[strum(props(w = 30))]
-    Average,
-    #[strum(props(w = 10))]
-    Fine,
-    #[strum(props(w = 5))]
-    Lovely,
-    #[strum(props(w = 1))]
-    Resplendent,
-}
-
 impl Fish {
     pub fn generate() -> Self {
         let mut rng = rand::rng();
-        let s = SPECIES[rng.random_range(0..SPECIES.len())].clone();
+        let s = &SPECIES[rng.random_range(0..SPECIES.len())];
         let length = rng.random_range(s.min_len..s.max_len);
         let weight = rng.random_range(s.min_weight..s.max_weight);
         let quality = FishQuality::generate();
 
         return Fish {
-            species: s,
+            species: SpeciesRef(s),
             length,
             weight,
             quality,
@@ -74,14 +47,14 @@ impl Fish {
 
 impl Item for Fish {
     fn name(&self) -> String {
-        self.species.name.clone()
+        self.species.0.name.clone()
     }
 
     fn value(&self) -> i32 {
         let species = &self.species;
-        let weight_factor = (self.weight - species.min_weight) as f32
-            / (species.max_weight - species.min_weight) as f32;
-        (species.base_value as f32 * species.rarity.multiplier() * (weight_factor as f32 + 0.5))
+        let weight_factor = (self.weight - species.0.min_weight) as f32
+            / (species.0.max_weight - species.0.min_weight) as f32;
+        (species.0.base_value as f32 * species.0.rarity.multiplier() * (weight_factor as f32 + 0.5))
             as i32
     }
 
@@ -90,27 +63,61 @@ impl Item for Fish {
     }
 
     fn icon(&self) -> Vec<Span<'_>> {
-        vec![self.species.icon()]
+        vec![self.species.0.icon()]
     }
 }
 
-impl FishQuality {
-    fn generate() -> Self {
-        let mut rng = rand::rng();
-        let qualities: Vec<FishQuality> = FishQuality::VARIANTS.to_vec();
-        let weights: Vec<i64> = FishQuality::iter()
-            .map(|q| q.get_int("w").unwrap())
-            .collect();
-        let dist = WeightedIndex::new(&weights).unwrap();
+#[derive(PartialEq, Clone, Debug)]
+pub struct SpeciesRef(pub &'static Species);
 
-        qualities[dist.sample(&mut rng)].clone()
+impl<'de> Deserialize<'de> for SpeciesRef {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s: String = Deserialize::deserialize(deserializer)?;
+        match SPECIES.iter().find(|&spec| spec.name == s) {
+            Some(spec) => Ok(SpeciesRef(spec)),
+            None => Err(D::Error::custom("Error deserializing species!")),
+        }
     }
 }
 
-impl Default for FishQuality {
-    fn default() -> Self {
-        FishQuality::generate()
+impl Serialize for SpeciesRef {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.0.name)
     }
+}
+
+#[derive(PartialEq, Eq, Deserialize, Serialize, Default, Debug, Hash, Clone)]
+pub struct Species {
+    pub name: String,
+    pub base_value: u32,
+    pub min_len: u32,
+    pub max_len: u32,
+    pub min_weight: u32,
+    pub max_weight: u32,
+    pub icon: String,
+    pub colour: Color,
+    pub rarity: SpeciesRarity,
+}
+
+impl Species {
+    pub fn icon(&self) -> Span<'_> {
+        Span::styled(self.icon.clone(), Style::default().fg(self.colour))
+    }
+}
+
+#[derive(Default, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy, EnumIter, Serialize)]
+pub enum SpeciesRarity {
+    #[default]
+    Common,
+    Rare,
+    Epic,
+    Legendary,
 }
 
 impl SpeciesRarity {
@@ -133,22 +140,40 @@ impl SpeciesRarity {
     }
 }
 
-#[derive(PartialEq, Eq, Deserialize, Serialize, Default, Debug, Hash, Clone)]
-pub struct Species {
-    pub name: String,
-    pub base_value: u32,
-    pub min_len: u32,
-    pub max_len: u32,
-    pub min_weight: u32,
-    pub max_weight: u32,
-    pub icon: String,
-    pub colour: Color,
-    pub rarity: SpeciesRarity,
+#[derive(
+    PartialEq, Eq, Debug, Hash, Clone, VariantArray, EnumProperty, EnumIter, Serialize, Deserialize,
+)]
+pub enum FishQuality {
+    #[strum(props(w = 50))]
+    Shoddy,
+    #[strum(props(w = 40))]
+    Mediocre,
+    #[strum(props(w = 30))]
+    Average,
+    #[strum(props(w = 10))]
+    Fine,
+    #[strum(props(w = 5))]
+    Lovely,
+    #[strum(props(w = 1))]
+    Resplendent,
 }
 
-impl Species {
-    pub fn icon(&self) -> Span<'_> {
-        Span::styled(self.icon.clone(), Style::default().fg(self.colour))
+impl FishQuality {
+    fn generate() -> Self {
+        let mut rng = rand::rng();
+        let qualities: Vec<FishQuality> = FishQuality::VARIANTS.to_vec();
+        let weights: Vec<i64> = FishQuality::iter()
+            .map(|q| q.get_int("w").unwrap())
+            .collect();
+        let dist = WeightedIndex::new(&weights).unwrap();
+
+        qualities[dist.sample(&mut rng)].clone()
+    }
+}
+
+impl Default for FishQuality {
+    fn default() -> Self {
+        FishQuality::generate()
     }
 }
 

@@ -2,14 +2,14 @@ use ratatui::{
     style::Stylize,
     text::{Line, Text},
 };
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::{
     inventory::Inventory,
     items::{
         Item, ItemTypes,
-        fish::{SPECIES, Species},
+        fish::{SPECIES, Species, SpeciesRef},
         rod::{RODS, Rod},
     },
 };
@@ -88,9 +88,7 @@ impl DexEntry for DexEntries {
 
 #[derive(Serialize, Deserialize)]
 pub struct FishEntry {
-    #[serde(deserialize_with = "deserialize_species_ref")]
-    #[serde(serialize_with = "serialize_species_ref")]
-    species: &'static Species,
+    species: SpeciesRef,
     count: u32,
     total_value: i32,
     highest_value: i32,
@@ -101,7 +99,7 @@ pub struct FishEntry {
 impl FishEntry {
     fn new(species: &'static Species) -> Self {
         Self {
-            species,
+            species: SpeciesRef(species),
             count: 0,
             total_value: 0,
             highest_value: 0,
@@ -131,9 +129,9 @@ impl DexEntry for FishEntry {
                 ]
             } else {
                 let l1 = Line::from(vec![
-                    self.species.icon(),
+                    self.species.0.icon(),
                     " ".into(),
-                    self.species.name.clone().into(),
+                    self.species.0.name.clone().into(),
                 ])
                 .bold()
                 .underlined();
@@ -176,23 +174,5 @@ impl DexEntry for Rod {
 
             vec![l1, l2]
         })
-    }
-}
-
-fn serialize_species_ref<S>(spec: &'static Species, s: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    s.serialize_str(&spec.name)
-}
-
-fn deserialize_species_ref<'de, D>(deserializer: D) -> Result<&'static Species, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s: String = Deserialize::deserialize(deserializer)?;
-    match SPECIES.iter().find(|&spec| spec.name == s) {
-        Some(spec) => Ok(spec),
-        None => Err(D::Error::custom("Error deserializing species!")),
     }
 }
