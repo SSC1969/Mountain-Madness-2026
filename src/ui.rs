@@ -298,7 +298,8 @@ impl App {
 
         // filter the items based on whether the player has fish or tools selected
         let mut new_items = Vec::new();
-        let mut j = 0;
+        let mut rod_count = 0;
+        let mut fish_count = 0;
         for (i, item) in items.into_iter().enumerate() {
             match item {
                 // add items to the ui list only if it matches the currently selected tab
@@ -306,15 +307,15 @@ impl App {
                     if self.menu_tab == 0 {
                         // add a mapping from the elements new index (in the UI list) to it's
                         // original index (in the player's backpack struct)
-                        self.player.backpack.ui_index_map.insert(j, i);
-                        j += 1;
+                        self.player.backpack.ui_index_map.insert(fish_count, i);
+                        fish_count += 1;
                         new_items.push(item);
                     }
                 }
                 ItemTypes::Rod(_) => {
                     if self.menu_tab == 1 {
-                        self.player.backpack.ui_index_map.insert(j, i);
-                        j += 1;
+                        self.player.backpack.ui_index_map.insert(rod_count, i);
+                        rod_count += 1;
                         new_items.push(item);
                     }
                 }
@@ -397,7 +398,8 @@ impl App {
 
         // filter the items based on whether the player has fish or tools selected
         let mut new_items = Vec::new();
-        let mut j = 0;
+        let mut fish_count = 0;
+        let mut rod_count = 0;
         for (i, item) in items.into_iter().enumerate() {
             match item {
                 // add items to the ui list only if it matches the currently selected tab
@@ -405,15 +407,15 @@ impl App {
                     if self.menu_tab == 0 {
                         // add a mapping from the elements new index (in the UI list) to it's
                         // original index (in the shop struct)
-                        self.shop.ui_index_map.insert(j, i);
-                        j += 1;
+                        self.shop.ui_index_map.insert(fish_count, i);
+                        fish_count += 1;
                         new_items.push(item);
                     }
                 }
                 ItemTypes::Rod(_) => {
                     if self.menu_tab == 1 {
-                        self.shop.ui_index_map.insert(j, i);
-                        j += 1;
+                        self.shop.ui_index_map.insert(rod_count, i);
+                        rod_count += 1;
                         new_items.push(item);
                     }
                 }
