@@ -124,18 +124,18 @@ impl SpeciesRarity {
     pub fn multiplier(&self) -> f32 {
         match self {
             SpeciesRarity::Common => 1.0,
-            SpeciesRarity::Rare => 1.5,
-            SpeciesRarity::Epic => 2.0,
-            SpeciesRarity::Legendary => 2.5,
+            SpeciesRarity::Rare => 2.0,
+            SpeciesRarity::Epic => 5.0,
+            SpeciesRarity::Legendary => 10.0,
         }
     }
 
     pub fn odds(&self) -> f32 {
         match self {
-            SpeciesRarity::Common => 0.5,
+            SpeciesRarity::Common => 1.0,
             SpeciesRarity::Rare => 0.3,
-            SpeciesRarity::Epic => 0.15,
-            SpeciesRarity::Legendary => 0.05,
+            SpeciesRarity::Epic => 0.05,
+            SpeciesRarity::Legendary => 0.001,
         }
     }
 }
