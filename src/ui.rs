@@ -306,14 +306,14 @@ impl App {
                     if self.menu_tab == 0 {
                         // add a mapping from the elements new index (in the UI list) to it's
                         // original index (in the player's backpack struct)
-                        self.player.backpack_ui_map.insert(j, i);
+                        self.player.backpack.ui_index_map.insert(j, i);
                         j += 1;
                         new_items.push(item);
                     }
                 }
                 ItemTypes::Rod(_) => {
                     if self.menu_tab == 1 {
-                        self.player.backpack_ui_map.insert(j, i);
+                        self.player.backpack.ui_index_map.insert(j, i);
                         j += 1;
                         new_items.push(item);
                     }
