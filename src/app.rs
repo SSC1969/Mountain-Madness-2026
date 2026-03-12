@@ -18,9 +18,10 @@ use ratatui::{
     style::{Color, Style},
     widgets::ListState,
 };
+use strum::EnumCount;
 use tui_input::{Input, backend::crossterm::EventHandler as crosstermEventHandler};
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, EnumCount)]
 pub enum Menu {
     #[default]
     Backpack,
@@ -34,7 +35,6 @@ pub const TICK_FPS: f64 = 30.0;
 
 /// How often the game will save
 const AUTOSAVE_INTERVAL: u32 = 60 * TICK_FPS as u32;
-pub const MENU_SIZE: i32 = 4;
 
 impl Menu {
     fn next(&self) -> Self {

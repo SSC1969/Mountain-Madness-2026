@@ -65,9 +65,10 @@ use ratatui::{
         Block, BorderType, Clear, List, ListItem, Padding, Paragraph, StatefulWidget, Tabs, Widget,
     },
 };
+use strum::EnumCount;
 
 use crate::{
-    app::{Anim, App, InputMode, MENU_SIZE, Menu},
+    app::{Anim, App, InputMode, Menu},
     inventory::dex::{DexEntries, DexEntry},
     items::{Item, ItemTypes},
 };
@@ -238,7 +239,7 @@ impl App {
             .merge_borders(MergeStrategy::Exact);
 
         let inner = block.inner(area).centered_horizontally(Constraint::Fill(1));
-        let constraints = (0..MENU_SIZE).map(|_| Constraint::Ratio(1, MENU_SIZE as u32));
+        let constraints = (0..Menu::COUNT).map(|_| Constraint::Ratio(1, Menu::COUNT as u32));
         let layout = Layout::horizontal(constraints)
             .flex(Flex::Center)
             .split(inner);
