@@ -347,6 +347,7 @@ impl App {
                 format!("Purchased {}", item.name()),
                 Style::default(),
             )]));
+            self.player.money -= item.value();
             self.player.add_item(item);
             self.events.send(AppEvent::Save);
         } else {
