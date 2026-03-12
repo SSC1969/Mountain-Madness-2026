@@ -1,9 +1,11 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     inventory::Inventory,
     items::{Item, ItemTypes},
 };
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct Backpack {
     pub items: Vec<ItemTypes>,
 }

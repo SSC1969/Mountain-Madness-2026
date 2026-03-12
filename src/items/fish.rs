@@ -7,7 +7,7 @@ use ratatui::{
     style::{Color, Style},
     text::Span,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use strum::{EnumIter, EnumProperty, IntoEnumIterator, VariantArray};
 
 use crate::items::Item;
@@ -20,7 +20,7 @@ pub static SPECIES: LazyLock<Vec<Species>> = LazyLock::new({
 });
 
 //TODO: convert from u32 to float
-#[derive(Default, Eq, PartialEq, Clone, Debug)]
+#[derive(Default, Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Fish {
     pub species: Species,
     pub length: u32,
@@ -28,7 +28,7 @@ pub struct Fish {
     pub quality: FishQuality,
 }
 
-#[derive(Default, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy, EnumIter)]
+#[derive(Default, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy, EnumIter, Serialize)]
 pub enum SpeciesRarity {
     #[default]
     Common,
@@ -37,7 +37,9 @@ pub enum SpeciesRarity {
     Legendary,
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Clone, VariantArray, EnumProperty, EnumIter)]
+#[derive(
+    PartialEq, Eq, Debug, Hash, Clone, VariantArray, EnumProperty, EnumIter, Serialize, Deserialize,
+)]
 pub enum FishQuality {
     #[strum(props(w = 50))]
     Shoddy,
@@ -131,7 +133,7 @@ impl SpeciesRarity {
     }
 }
 
-#[derive(PartialEq, Eq, Deserialize, Default, Debug, Hash, Clone)]
+#[derive(PartialEq, Eq, Deserialize, Serialize, Default, Debug, Hash, Clone)]
 pub struct Species {
     pub name: String,
     pub base_value: u32,

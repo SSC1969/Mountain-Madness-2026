@@ -1,7 +1,13 @@
+use std::{
+    fs::{File, create_dir_all},
+    io::{BufReader, BufWriter, Write},
+};
+
 use crate::{
     chat::ChatHandler,
+    config::get_data_dir,
     event::{AppEvent, Event, EventHandler, NavigationDirection},
-    inventory::shop::Shop,
+    inventory::{Inventory, shop::Shop},
     items::{Item, ItemTypes, fish::Fish},
     player::{FishingState, Player},
 };
@@ -22,6 +28,11 @@ pub enum Menu {
     Options,
 }
 
+/// The frequency at which tick events are emitted (ticks per second)
+pub const TICK_FPS: f64 = 30.0;
+
+/// How often the game will save
+const AUTOSAVE_INTERVAL: u32 = 60 * TICK_FPS as u32;
 pub const MENU_SIZE: i32 = 4;
 
 impl Menu {
@@ -85,9 +96,10 @@ pub struct App {
     pub dex_state: ListState,
     /// Struct used to display messages like notifications
     pub toast: Toast,
-
     /// Shop struct
     pub shop: Shop,
+    /// Timer to determine when to autosave
+    pub autosave_timer: u32,
 
     pub input: Input,
     // Whether the chatbox is open or not
@@ -103,8 +115,29 @@ pub struct App {
 impl App {
     /// Constructs a new instance of [`App`].
     pub fn new() -> Self {
-        let events = EventHandler::new();
+        let mut events = EventHandler::new();
         let event_tx = events.sender();
+
+        let player = match App::load_game() {
+            Ok(mut p) => {
+                events.send(AppEvent::ShowToast(vec![(
+                    "Data loaded!".to_string(),
+                    Style::default().fg(Color::Green),
+                )]));
+                p.ticks_until_next_bite = 120;
+                p
+            }
+            Err(e) => {
+                print!("Error {e}");
+                Player::default()
+            }
+        };
+
+        // remove any tools from the shop if the player already owns them
+        let mut shop = Shop::default();
+        for item in &player.backpack.items {
+            shop.remove_item(item.clone());
+        }
 
         Self {
             running: true,
@@ -112,15 +145,16 @@ impl App {
             chat: ChatHandler::new(event_tx),
             menu: Menu::default(),
             menu_tab: 0,
-            player: Player::default(),
+            player: player,
             backpack_state: ListState::default(),
             dex_state: ListState::default(),
             toast: Toast::default(),
 
-            shop: Shop::default(),
+            shop: shop,
+            autosave_timer: AUTOSAVE_INTERVAL,
 
             input: Input::new(std::string::String::from("")),
-            input_mode: InputMode::Editing,
+            input_mode: InputMode::Normal,
             messages: Vec::new(),
             cursor_position: Option::Some((0, 0)),
             anim: Anim::DEFAULT,
@@ -154,6 +188,14 @@ impl App {
             },
             Event::App(app_event) => match app_event {
                 AppEvent::Quit => self.quit(),
+                AppEvent::Save => {
+                    if let Err(e) = self.save_game() {
+                        self.events.send(AppEvent::ShowToast(vec![(
+                            format!("Error saving game: {e}"),
+                            Style::default().fg(Color::Red),
+                        )]));
+                    }
+                }
                 AppEvent::ChangeMenu(menu) => self.menu = menu,
                 AppEvent::Navigate(dir) => match dir {
                     NavigationDirection::Left => self.menu = self.menu.prev(),
@@ -223,7 +265,6 @@ impl App {
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
                 self.events.send(AppEvent::Quit)
             }
-            KeyCode::Char(' ') => self.events.send(AppEvent::FishBiting),
             KeyCode::Char('t') => self
                 .events
                 .send(AppEvent::ChangeInputMode(InputMode::Editing)),
@@ -306,6 +347,7 @@ impl App {
                 Style::default(),
             )]));
             self.player.add_item(item);
+            self.events.send(AppEvent::Save);
         } else {
             self.events.send(AppEvent::ShowToast(vec![(
                 "Can't afford that!".to_string(),
@@ -321,6 +363,10 @@ impl App {
     pub fn tick(&mut self) {
         self.player.tick();
         self.toast.tick();
+        self.autosave_timer = self.autosave_timer.saturating_sub(1);
+        if self.autosave_timer <= 0 {
+            self.events.send(AppEvent::Save);
+        }
 
         // Update animation based on the player's state
         self.anim = match self.player.fishing_state {
@@ -333,7 +379,44 @@ impl App {
 
     /// Set running to false to quit the application.
     pub fn quit(&mut self) {
-        self.running = false;
+        if let Ok(_) = self.save_game() {
+            self.running = false;
+        } else {
+            self.events.send(AppEvent::ShowToast(vec![(
+                "Error saving game! Please try again!".to_string(),
+                Style::default().fg(Color::Red),
+            )]))
+        }
+    }
+
+    /// Saves the current game state to a file
+    pub fn save_game(&mut self) -> color_eyre::Result<()> {
+        let mut data_dir = get_data_dir();
+        create_dir_all(&data_dir)?;
+
+        data_dir.push("player.json");
+
+        let file = File::create(data_dir)?;
+        let mut writer = BufWriter::new(file);
+        serde_json::to_writer_pretty(&mut writer, &self.player)?;
+        writer.flush()?;
+
+        // reset the autosave timer
+        self.autosave_timer = AUTOSAVE_INTERVAL;
+
+        Ok(())
+    }
+
+    /// Loads the game if the data exists
+    pub fn load_game() -> color_eyre::Result<Player> {
+        let mut data_dir = get_data_dir();
+
+        data_dir.push("player.json");
+        let file = File::open(data_dir)?;
+        let reader = BufReader::new(file);
+        let player: Player = serde_json::from_reader(reader)?;
+
+        Ok(player)
     }
 }
 

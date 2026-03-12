@@ -6,12 +6,9 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 
 use crate::{
-    app::{InputMode, Menu},
+    app::{InputMode, Menu, TICK_FPS},
     items::rod::Rod,
 };
-
-/// The frequency at which tick events are emitted.
-const TICK_FPS: f64 = 30.0;
 
 #[derive(Clone, Debug)]
 pub enum NavigationDirection {
@@ -47,6 +44,8 @@ pub enum Event {
 pub enum AppEvent {
     /// Quit the application.
     Quit,
+    /// Save the game
+    Save,
 
     // Menu events
     Navigate(NavigationDirection),
