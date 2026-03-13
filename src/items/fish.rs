@@ -1,8 +1,7 @@
 use std::{str::FromStr, sync::LazyLock};
 
-use rand::RngExt;
-use rand_distr::Distribution;
 use rand_distr::weighted::WeightedIndex;
+use rand_distr::{Distribution, Normal};
 use ratatui::{
     style::{Color, Style, Stylize},
     text::{Line, Span},
@@ -19,7 +18,6 @@ pub static SPECIES: LazyLock<Vec<Species>> = LazyLock::new({
     || serde_json::from_str(&SPECIES_JSON).expect("Error deserializing species!")
 });
 
-//TODO: convert from u32 to float
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Fish {
     pub species: SpeciesRef,
@@ -37,8 +35,12 @@ impl Fish {
         let dist = WeightedIndex::new(&weights).unwrap();
         let s = &SPECIES[dist.sample(&mut rng)];
 
-        let length = rng.random_range(s.min_len..s.max_len);
-        let weight = rng.random_range(s.min_weight..s.max_weight);
+        // generate length/weight based on a normal distribution
+        let len_norm = Normal::new(1.25 * s.avg_len, 0.55 * s.avg_len).unwrap();
+        let length = len_norm.sample(&mut rng).abs();
+        let weight_norm = Normal::new(1.25 * s.avg_weight, 0.55 * s.avg_weight).unwrap();
+        let weight = weight_norm.sample(&mut rng).abs();
+
         let quality = FishQuality::generate();
 
         return Fish {
@@ -57,16 +59,31 @@ impl Item for Fish {
 
     fn value(&self) -> i32 {
         let species = &self.species;
-        let weight_factor = (self.weight - species.0.min_weight)
-            / (species.0.max_weight - species.0.min_weight)
-            * 1.5
-            + 0.5;
-        let length_factor =
-            (self.length - species.0.min_len) / (species.0.max_len - species.0.min_len) * 1.5 + 0.5;
+        let weight_factor = self.weight / species.0.avg_weight;
+        let length_factor = self.length / species.0.avg_len;
+        let size_factor = (weight_factor + length_factor) / 2.0;
+
+        let size_mult = {
+            if size_factor <= 0.25 {
+                1.75
+            } else if size_factor <= 0.5 {
+                0.6
+            } else if size_factor <= 1.0 {
+                0.8
+            } else if size_factor <= 1.5 {
+                1.0
+            } else if size_factor <= 2.0 {
+                1.5
+            } else if size_factor <= 3.0 {
+                2.5
+            } else {
+                4.25
+            }
+        };
 
         (species.0.base_value as f32
             * (self.quality.get_int("v").unwrap() as f32 / 10.0)
-            * (weight_factor + length_factor)) as i32
+            * size_mult) as i32
     }
 
     fn info(&'_ self) -> Line<'_> {
@@ -111,10 +128,8 @@ impl Serialize for SpeciesRef {
 pub struct Species {
     pub name: String,
     pub base_value: u32,
-    pub min_len: f32,
-    pub max_len: f32,
-    pub min_weight: f32,
-    pub max_weight: f32,
+    pub avg_len: f32,
+    pub avg_weight: f32,
     pub icon: Vec<(String, Style)>,
     pub rarity: SpeciesRarity,
 }
