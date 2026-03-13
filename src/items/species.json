@@ -2,10 +2,8 @@
     {
         "name": "Sockeye Salmon",
         "base_value": 35,
-        "min_len": 60,
-        "max_len": 84,
-        "min_weight": 2.3,
-        "max_weight": 7.0,
+        "avg_len": 72,
+        "avg_weight": 4.8,
         "icon": [
             [
                 "<",
@@ -31,10 +29,8 @@
     {
         "name": "Halibut",
         "base_value": 80,
-        "min_len": 30,
-        "max_len": 240,
-        "min_weight": 30.0,
-        "max_weight": 200.0,
+        "avg_len": 135,
+        "avg_weight": 115.0,
         "icon": [
             [
                 "<( )><",
@@ -48,10 +44,8 @@
     {
         "name": "Trout",
         "base_value": 50,
-        "min_len": 35,
-        "max_len": 130,
-        "min_weight": 0.5,
-        "max_weight": 10.0,
+        "avg_len": 83,
+        "avg_weight": 5.3,
         "icon": [
             [
                 "<((((><",
