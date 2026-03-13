@@ -44,26 +44,6 @@ pub const TICK_FPS: f64 = 30.0;
 const AUTOSAVE_INTERVAL: u32 = 60 * TICK_FPS as u32;
 
 impl Menu {
-    fn next(&self) -> Self {
-        match self {
-            Menu::Backpack => Menu::Fincyclopedia,
-            Menu::Fincyclopedia => Menu::Market,
-            Menu::Market => Menu::Help,
-            Menu::Help => Menu::Options,
-            Menu::Options => Menu::Backpack,
-        }
-    }
-
-    fn prev(&self) -> Self {
-        match self {
-            Menu::Backpack => Menu::Options,
-            Menu::Fincyclopedia => Menu::Backpack,
-            Menu::Market => Menu::Fincyclopedia,
-            Menu::Help => Menu::Market,
-            Menu::Options => Menu::Help,
-        }
-    }
-
     pub fn color(&self) -> Color {
         Color::from_str(self.get_str("c").unwrap()).unwrap()
     }

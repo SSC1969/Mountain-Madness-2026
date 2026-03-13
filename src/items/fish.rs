@@ -206,28 +206,6 @@ mod tests {
 
     use super::*;
 
-    // #[test]
-    // fn test_load_species() {
-    //     assert!(species.is_ok());
-
-    //     let species = species.unwrap();
-
-    //     println!("{} species read\n", species.len());
-    //     for s in &species {
-    //         println!(
-    //             "{}: icon {} len {}–{}cm, weight {}–{}kg, {:?}, {:?}",
-    //             s.name,
-    //             s.icon,
-    //             s.min_len,
-    //             s.max_len,
-    //             s.min_weight,
-    //             s.max_weight,
-    //             s.rarity,
-    //             s.colour
-    //         );
-    //     }
-    //     println!("");
-    // }
     #[test]
     fn test_generate_fish() {
         for _ in 0..10 {
