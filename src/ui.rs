@@ -59,13 +59,13 @@ use std::str::FromStr;
 
 use ratatui::{
     buffer::Buffer,
-    layout::{Alignment, Constraint, Flex, Layout, Rect, Spacing},
+    layout::{Alignment, Constraint, Flex, Layout, Offset, Rect, Spacing},
     style::{Color, Style, Stylize},
     symbols::merge::MergeStrategy,
     text::{Line, Span},
     widgets::{
-        Block, BorderType, Borders, Clear, List, ListItem, Padding, Paragraph, StatefulWidget,
-        Tabs, Widget, Wrap,
+        Block, BorderType, Clear, List, ListItem, Padding, Paragraph, StatefulWidget, Tabs, Widget,
+        Wrap,
     },
 };
 use strum::{EnumCount, EnumProperty, IntoEnumIterator};
@@ -110,8 +110,8 @@ impl Widget for &mut App {
             self.render_input(input, buf);
         }
 
-        self.render_menu(menu, buf);
         self.render_toolbar(toolbar, buf);
+        self.render_menu(menu, buf);
     }
 }
 
@@ -143,17 +143,24 @@ impl App {
     }
 
     // move to bottom of impl
-    fn render_input(&mut self, area: Rect, buf: &mut Buffer) {
+    fn render_input(&mut self, mut area: Rect, buf: &mut Buffer) {
+        area = area.offset(Offset::new(-1, -1));
+
         let width = area.width.max(3) - 3;
         let scroll = self.input.visual_scroll(width as usize);
         let style = match self.input_mode {
             InputMode::Normal => Style::default(),
             InputMode::Editing => Color::Yellow.into(),
         };
+
         let input = Paragraph::new(self.input.value())
             .style(style)
             .scroll((0, scroll as u16))
-            .block(Block::bordered().border_type(BorderType::Rounded));
+            .block(
+                Block::bordered()
+                    .border_type(BorderType::Rounded)
+                    .merge_borders(MergeStrategy::Fuzzy),
+            );
         input.render(area, buf);
 
         if self.input_mode == InputMode::Editing {
@@ -162,7 +169,9 @@ impl App {
         }
     }
 
-    fn render_messages(&self, area: Rect, buf: &mut Buffer) {
+    fn render_messages(&self, mut area: Rect, buf: &mut Buffer) {
+        area = area.offset(Offset::new(-1, -1));
+
         let start = self.messages.len().saturating_sub(3);
         let messages = self.messages[start..].iter().map(String::as_str);
         let messages = List::new(messages).block(
@@ -191,7 +200,7 @@ impl App {
                     .right_aligned(),
             )
             .border_type(BorderType::Rounded)
-            .merge_borders(MergeStrategy::Fuzzy);
+            .merge_borders(MergeStrategy::Replace);
 
         let inner = block.inner(area);
 
@@ -236,6 +245,7 @@ impl App {
                 .collect();
             Paragraph::new(Line::from(spans))
                 .right_aligned()
+                .italic()
                 .bold()
                 .render(toast_area, buf);
         }
@@ -244,7 +254,7 @@ impl App {
     fn render_toolbar(&self, area: Rect, buf: &mut Buffer) {
         let block = Block::bordered()
             .border_type(BorderType::Rounded)
-            .border_style(Color::White)
+            .border_style(self.menu.color())
             .merge_borders(MergeStrategy::Replace);
 
         let inner = block.inner(area).centered_horizontally(Constraint::Fill(1));
@@ -255,26 +265,31 @@ impl App {
 
         block.render(area, buf);
 
-        Line::from("<b> Backpack")
+        let mut bp = Line::from("<b> Backpack")
             .centered()
-            .fg(Menu::Backpack.color())
-            .render(layout[0], buf);
-        Line::from("<p> Fincyclopedia")
+            .fg(Menu::Backpack.color());
+        let mut fincyclopedia = Line::from("<p> Fincyclopedia")
             .centered()
-            .fg(Menu::Fincyclopedia.color())
-            .render(layout[1], buf);
-        Line::from("<m> Market")
+            .fg(Menu::Fincyclopedia.color());
+        let mut market = Line::from("<m> Market").centered().fg(Menu::Market.color());
+        let mut help = Line::from("<h> Help").centered().fg(Menu::Help.color());
+        let mut options = Line::from("<o> Options")
             .centered()
-            .fg(Menu::Market.color())
-            .render(layout[2], buf);
-        Line::from("<h> Help")
-            .centered()
-            .fg(Menu::Help.color())
-            .render(layout[3], buf);
-        Line::from("<o> Options")
-            .centered()
-            .fg(Menu::Options.color())
-            .render(layout[4], buf);
+            .fg(Menu::Options.color());
+
+        match self.menu {
+            Menu::Backpack => bp = bp.reversed(),
+            Menu::Fincyclopedia => fincyclopedia = fincyclopedia.reversed(),
+            Menu::Market => market = market.reversed(),
+            Menu::Help => help = help.reversed(),
+            Menu::Options => options = options.reversed(),
+        }
+
+        bp.render(layout[0], buf);
+        fincyclopedia.render(layout[1], buf);
+        market.render(layout[2], buf);
+        help.render(layout[3], buf);
+        options.render(layout[4], buf);
     }
 
     fn render_menu(&mut self, area: Rect, buf: &mut Buffer) {
@@ -282,11 +297,10 @@ impl App {
             .title(format!("{:?}", self.menu))
             .title_style(Style::default().fg(self.menu.color()))
             .title_alignment(Alignment::Left)
-            .borders(Borders::BOTTOM.complement())
             .border_type(BorderType::Rounded)
             .border_style(self.menu.color())
-            .merge_borders(MergeStrategy::Replace)
-            .padding(Padding::new(1, 1, 0, 1));
+            .merge_borders(MergeStrategy::Fuzzy)
+            .padding(Padding::new(1, 1, 0, 0));
 
         match self.menu {
             Menu::Backpack => self.render_backpack(area, buf, block),
@@ -361,6 +375,7 @@ impl App {
             .flex(Flex::Center)
             .areas(tabs_area);
         Tabs::new(vec!["Fish", "Tools"])
+            .style(self.menu.color())
             .bold()
             .select(self.menu_tab as usize)
             .render(centered_tabs, buf);
@@ -426,6 +441,7 @@ impl App {
             .flex(Flex::Center)
             .areas(tabs_area);
         Tabs::new(vec!["Fish", "Tools"])
+            .style(self.menu.color())
             .bold()
             .select(self.menu_tab as usize)
             .render(centered_tabs, buf);
@@ -463,6 +479,7 @@ impl App {
             .flex(Flex::Center)
             .areas(tabs_area);
         Tabs::new(vec!["Fish", "Tools"])
+            .style(self.menu.color())
             .bold()
             .select(self.menu_tab as usize)
             .render(centered_tabs, buf);
