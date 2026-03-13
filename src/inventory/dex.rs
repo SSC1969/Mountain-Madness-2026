@@ -92,8 +92,8 @@ pub struct FishEntry {
     count: u32,
     total_value: i32,
     highest_value: i32,
-    largest: u32,
-    heaviest: u32,
+    largest: f32,
+    heaviest: f32,
 }
 
 impl FishEntry {
@@ -103,8 +103,8 @@ impl FishEntry {
             count: 0,
             total_value: 0,
             highest_value: 0,
-            largest: 0,
-            heaviest: 0,
+            largest: 0.0,
+            heaviest: 0.0,
         }
     }
 }
@@ -115,8 +115,8 @@ impl DexEntry for FishEntry {
             self.count += 1;
             self.total_value += fish.value();
             self.highest_value = i32::max(self.highest_value, fish.value());
-            self.largest = u32::max(self.largest, fish.length);
-            self.heaviest = u32::max(self.heaviest, fish.weight);
+            self.largest = f32::max(self.largest, fish.length);
+            self.heaviest = f32::max(self.heaviest, fish.weight);
         }
     }
 
@@ -138,7 +138,7 @@ impl DexEntry for FishEntry {
 
                 let l3 = Line::from(vec![
                     format!(
-                        "Best: {}cm | {}g | ${}",
+                        "Best: {:.1}cm | {:.1}kg | ${}",
                         self.largest, self.heaviest, self.highest_value
                     )
                     .into(),

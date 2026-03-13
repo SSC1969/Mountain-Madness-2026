@@ -20,8 +20,8 @@ pub static SPECIES: LazyLock<Vec<Species>> = LazyLock::new({
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Fish {
     pub species: SpeciesRef,
-    pub length: u32,
-    pub weight: u32,
+    pub length: f32,
+    pub weight: f32,
     pub quality: FishQuality,
 }
 
@@ -56,7 +56,10 @@ impl Item for Fish {
     }
 
     fn info(&self) -> String {
-        format!("{}g | {}cm - {:?}", self.weight, self.length, self.quality)
+        format!(
+            "{:.1}kg | {:.1}cm - {:?}",
+            self.weight, self.length, self.quality
+        )
     }
 
     fn icon(&self) -> Vec<Span<'_>> {
@@ -89,14 +92,14 @@ impl Serialize for SpeciesRef {
     }
 }
 
-#[derive(PartialEq, Eq, Deserialize, Serialize, Default, Debug, Hash, Clone)]
+#[derive(PartialEq, Deserialize, Serialize, Default, Debug, Clone)]
 pub struct Species {
     pub name: String,
     pub base_value: u32,
-    pub min_len: u32,
-    pub max_len: u32,
-    pub min_weight: u32,
-    pub max_weight: u32,
+    pub min_len: f32,
+    pub max_len: f32,
+    pub min_weight: f32,
+    pub max_weight: f32,
     pub icon: Vec<(String, Style)>,
     pub rarity: SpeciesRarity,
 }
