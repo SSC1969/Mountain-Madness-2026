@@ -253,6 +253,7 @@ impl App {
                     self.input.reset();
                     if self.player.name == "" {
                         self.events.send(AppEvent::ChangePlayerName(msg));
+                        self.events.send(AppEvent::ChangeMenu(Menu::Help));
                     } else {
                         self.messages.push(format!("{}: {}", self.player.name, msg));
                         self.events.send(AppEvent::SendChat(msg));
