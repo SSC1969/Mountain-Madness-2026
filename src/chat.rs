@@ -184,25 +184,27 @@ impl ChatThread {
         let buf = rmp_serde::to_vec(&message);
 
         match &buf {
-            Err(e) => {
-                let text = format!("Serializer error: {e:?}");
-                let _ = self
-                    .sender
-                    .send(Event::App(AppEvent::MessageReceived(text)));
+            Err(_e) => {
+                // TODO: add proper error handling?
+                // let text = format!("Serializer error: {e:?}");
+                // let _ = self
+                //     .sender
+                //     .send(Event::App(AppEvent::MessageReceived(text)));
             }
             _ => {}
         }
 
-        if let Err(e) = self
+        if let Err(_e) = self
             .swarm
             .behaviour_mut()
             .gossipsub
             .publish(self.topic.clone(), buf.unwrap())
         {
-            let text = format!("Publish error: {e:?}");
-            let _ = self
-                .sender
-                .send(Event::App(AppEvent::MessageReceived(text)));
+            // TODO: add proper error handling?
+            // let text = format!("Publish error: {e:?}");
+            // let _ = self
+            //     .sender
+            //     .send(Event::App(AppEvent::MessageReceived(text)));
         }
         Ok(())
     }
