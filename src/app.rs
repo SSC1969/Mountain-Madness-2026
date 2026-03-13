@@ -205,14 +205,13 @@ impl App {
                 },
                 AppEvent::CastRod => self.player.cast_rod(),
                 AppEvent::FishBiting => {
+                    self.input_mode = InputMode::Normal;
                     self.player.bite();
-                    self.events.send(AppEvent::SendChat("biting...".to_owned()));
                 }
                 AppEvent::FishCatching => {
                     // this updates the player state as well as getting the caught fish's icon
                     self.recent_catch = Some(self.player.catch_fish());
                 }
-                AppEvent::FishCaught => self.player.post_catch(),
                 AppEvent::ChangeRod(rod) => self.player.equip(rod),
                 AppEvent::ShowToast(msg) => self.toast.start(msg),
 
@@ -240,11 +239,11 @@ impl App {
                     self.input.reset();
                     if self.player.name == "" {
                         self.events.send(AppEvent::ChangePlayerName(msg));
-                        self.input_mode = InputMode::Normal;
                     } else {
                         self.messages.push(msg.clone());
                         self.events.send(AppEvent::SendChat(msg));
                     }
+                    self.input_mode = InputMode::Normal;
                 }
                 KeyCode::Esc => self
                     .events
@@ -368,6 +367,11 @@ impl App {
         self.autosave_timer = self.autosave_timer.saturating_sub(1);
         if self.autosave_timer <= 0 {
             self.events.send(AppEvent::Save);
+        }
+
+        if self.player.ticks_until_next_bite <= 0 && self.player.fishing_state == FishingState::Idle
+        {
+            self.events.send(AppEvent::FishBiting);
         }
 
         // Update animation based on the player's state

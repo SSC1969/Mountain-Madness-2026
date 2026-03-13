@@ -67,9 +67,7 @@ impl Player {
     pub fn tick(&mut self) {
         match self.fishing_state {
             FishingState::Idle => {
-                if self.ticks_until_next_bite <= 0 {
-                    self.bite();
-                } else {
+                if self.ticks_until_next_bite > 0 {
                     self.ticks_until_next_bite -= 1;
                 }
             }
