@@ -49,10 +49,16 @@ impl Item for Fish {
 
     fn value(&self) -> i32 {
         let species = &self.species;
-        let weight_factor = (self.weight - species.0.min_weight) as f32
-            / (species.0.max_weight - species.0.min_weight) as f32;
-        (species.0.base_value as f32 * species.0.rarity.multiplier() * (weight_factor as f32 + 0.5))
-            as i32
+        let weight_factor = (self.weight - species.0.min_weight)
+            / (species.0.max_weight - species.0.min_weight)
+            * 1.5
+            + 0.5;
+        let length_factor =
+            (self.length - species.0.min_len) / (species.0.max_len - species.0.min_len) * 1.5 + 0.5;
+
+        (species.0.base_value as f32
+            * (self.quality.get_int("v").unwrap() as f32 / 10.0)
+            * (weight_factor + length_factor)) as i32
     }
 
     fn info(&self) -> String {
@@ -143,17 +149,17 @@ impl SpeciesRarity {
     PartialEq, Eq, Debug, Hash, Clone, VariantArray, EnumProperty, EnumIter, Serialize, Deserialize,
 )]
 pub enum FishQuality {
-    #[strum(props(w = 50))]
+    #[strum(props(w = 50, v = 3))]
     Shoddy,
-    #[strum(props(w = 40))]
+    #[strum(props(w = 40, v = 5))]
     Mediocre,
-    #[strum(props(w = 30))]
+    #[strum(props(w = 30, v = 10))]
     Average,
-    #[strum(props(w = 10))]
+    #[strum(props(w = 10, v = 20))]
     Fine,
-    #[strum(props(w = 5))]
+    #[strum(props(w = 5, v = 50))]
     Lovely,
-    #[strum(props(w = 1))]
+    #[strum(props(w = 1, v = 100))]
     Resplendent,
 }
 

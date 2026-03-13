@@ -30,7 +30,7 @@
     },
     {
         "name": "Halibut",
-        "base_value": 50,
+        "base_value": 80,
         "min_len": 30,
         "max_len": 240,
         "min_weight": 30.0,
@@ -47,7 +47,7 @@
     },
     {
         "name": "Trout",
-        "base_value": 20,
+        "base_value": 50,
         "min_len": 35,
         "max_len": 130,
         "min_weight": 0.5,
