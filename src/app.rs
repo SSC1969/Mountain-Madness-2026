@@ -2,6 +2,7 @@ use std::{
     fs::{File, create_dir_all},
     io::{BufReader, BufWriter, Write},
     path::PathBuf,
+    str::FromStr,
 };
 
 use crate::{
@@ -18,16 +19,21 @@ use ratatui::{
     style::{Color, Style},
     widgets::ListState,
 };
-use strum::{EnumCount, EnumIter};
+use strum::{EnumCount, EnumIter, EnumProperty};
 use tui_input::{Input, backend::crossterm::EventHandler as crosstermEventHandler};
 
-#[derive(Clone, Default, Debug, EnumCount, EnumIter)]
+#[derive(Clone, Default, Debug, EnumCount, EnumIter, EnumProperty)]
 pub enum Menu {
     #[default]
+    #[strum(props(c = "#FF8AAF"))]
     Backpack,
+    #[strum(props(c = "#FF9F8A"))]
     Fincyclopedia,
+    #[strum(props(c = "#FFDA8A"))]
     Market,
+    #[strum(props(c = "#8AFFDA"))]
     Help,
+    #[strum(props(c = "#8AAFFF"))]
     Options,
 }
 
@@ -56,6 +62,10 @@ impl Menu {
             Menu::Help => Menu::Market,
             Menu::Options => Menu::Help,
         }
+    }
+
+    pub fn color(&self) -> Color {
+        Color::from_str(self.get_str("c").unwrap()).unwrap()
     }
 }
 

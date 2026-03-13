@@ -64,8 +64,8 @@ use ratatui::{
     symbols::merge::MergeStrategy,
     text::{Line, Span},
     widgets::{
-        Block, BorderType, Clear, List, ListItem, Padding, Paragraph, StatefulWidget, Tabs, Widget,
-        Wrap,
+        Block, BorderType, Borders, Clear, List, ListItem, Padding, Paragraph, StatefulWidget,
+        Tabs, Widget, Wrap,
     },
 };
 use strum::{EnumCount, EnumProperty, IntoEnumIterator};
@@ -101,8 +101,6 @@ impl Widget for &mut App {
             Layout::vertical([Constraint::Fill(1), Constraint::Max(3)]).areas(chatbox);
 
         self.render_viewport(viewport, buf);
-        self.render_menu(menu, buf);
-        self.render_toolbar(toolbar, buf);
 
         // Render the name prompt if the player has no name; otherwise, render the chat
         if self.player.name == "" {
@@ -111,6 +109,9 @@ impl Widget for &mut App {
             self.render_messages(messages, buf);
             self.render_input(input, buf);
         }
+
+        self.render_menu(menu, buf);
+        self.render_toolbar(toolbar, buf);
     }
 }
 
@@ -152,7 +153,7 @@ impl App {
         let input = Paragraph::new(self.input.value())
             .style(style)
             .scroll((0, scroll as u16))
-            .block(Block::bordered());
+            .block(Block::bordered().border_type(BorderType::Rounded));
         input.render(area, buf);
 
         if self.input_mode == InputMode::Editing {
@@ -164,7 +165,11 @@ impl App {
     fn render_messages(&self, area: Rect, buf: &mut Buffer) {
         let start = self.messages.len().saturating_sub(3);
         let messages = self.messages[start..].iter().map(String::as_str);
-        let messages = List::new(messages).block(Block::bordered().title("Messages"));
+        let messages = List::new(messages).block(
+            Block::bordered()
+                .border_type(BorderType::Rounded)
+                .title("Messages"),
+        );
         // multiple renders()'s so specify widget
         Widget::render(messages, area, buf);
     }
@@ -186,7 +191,7 @@ impl App {
                     .right_aligned(),
             )
             .border_type(BorderType::Rounded)
-            .merge_borders(MergeStrategy::Exact);
+            .merge_borders(MergeStrategy::Fuzzy);
 
         let inner = block.inner(area);
 
@@ -239,7 +244,8 @@ impl App {
     fn render_toolbar(&self, area: Rect, buf: &mut Buffer) {
         let block = Block::bordered()
             .border_type(BorderType::Rounded)
-            .merge_borders(MergeStrategy::Exact);
+            .border_style(Color::White)
+            .merge_borders(MergeStrategy::Replace);
 
         let inner = block.inner(area).centered_horizontally(Constraint::Fill(1));
         let constraints = (0..Menu::COUNT).map(|_| Constraint::Ratio(1, Menu::COUNT as u32));
@@ -249,22 +255,38 @@ impl App {
 
         block.render(area, buf);
 
-        Line::from("<b> Backpack").centered().render(layout[0], buf);
+        Line::from("<b> Backpack")
+            .centered()
+            .fg(Menu::Backpack.color())
+            .render(layout[0], buf);
         Line::from("<p> Fincyclopedia")
             .centered()
+            .fg(Menu::Fincyclopedia.color())
             .render(layout[1], buf);
-        Line::from("<m> Market").centered().render(layout[2], buf);
-        Line::from("<h> Help").centered().render(layout[3], buf);
-        Line::from("<o> Options").centered().render(layout[4], buf);
+        Line::from("<m> Market")
+            .centered()
+            .fg(Menu::Market.color())
+            .render(layout[2], buf);
+        Line::from("<h> Help")
+            .centered()
+            .fg(Menu::Help.color())
+            .render(layout[3], buf);
+        Line::from("<o> Options")
+            .centered()
+            .fg(Menu::Options.color())
+            .render(layout[4], buf);
     }
 
     fn render_menu(&mut self, area: Rect, buf: &mut Buffer) {
         let block = Block::bordered()
             .title(format!("{:?}", self.menu))
+            .title_style(Style::default().fg(self.menu.color()))
             .title_alignment(Alignment::Left)
+            .borders(Borders::BOTTOM.complement())
             .border_type(BorderType::Rounded)
-            .merge_borders(MergeStrategy::Exact)
-            .padding(Padding::horizontal(1));
+            .border_style(self.menu.color())
+            .merge_borders(MergeStrategy::Replace)
+            .padding(Padding::new(1, 1, 0, 1));
 
         match self.menu {
             Menu::Backpack => self.render_backpack(area, buf, block),
@@ -323,9 +345,10 @@ impl App {
         let items = self.player.backpack.items.clone();
 
         let inner = block.inner(area);
-        let [tabs_area, content_area, controls_area] = Layout::vertical(vec![
+        let [tabs_area, content_area, _, controls_area] = Layout::vertical(vec![
             Constraint::Length(1),
             Constraint::Min(0),
+            Constraint::Length(1),
             Constraint::Length(1),
         ])
         .areas(inner);
@@ -387,9 +410,10 @@ impl App {
         let mut items = self.player.dex.get_all();
 
         let inner = block.inner(area);
-        let [tabs_area, content_area, controls_area] = Layout::vertical(vec![
+        let [tabs_area, content_area, _, controls_area] = Layout::vertical(vec![
             Constraint::Length(1),
             Constraint::Min(0),
+            Constraint::Length(1),
             Constraint::Length(1),
         ])
         .areas(inner);
@@ -422,9 +446,10 @@ impl App {
 
     fn render_shop(&mut self, area: Rect, buf: &mut Buffer, block: Block) {
         let inner = block.inner(area);
-        let [tabs_area, content_area, controls_area] = Layout::vertical(vec![
+        let [tabs_area, content_area, _, controls_area] = Layout::vertical(vec![
             Constraint::Length(1),
             Constraint::Min(0),
+            Constraint::Length(1),
             Constraint::Length(1),
         ])
         .areas(inner);
