@@ -254,7 +254,7 @@ impl App {
                     if self.player.name == "" {
                         self.events.send(AppEvent::ChangePlayerName(msg));
                     } else {
-                        self.messages.push(msg.clone());
+                        self.messages.push(format!("{}: {}", self.player.name, msg));
                         self.events.send(AppEvent::SendChat(msg));
                     }
                     self.events
