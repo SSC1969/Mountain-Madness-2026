@@ -1,15 +1,16 @@
 use ratatui::{
-    style::Stylize,
-    text::{Line, Text},
+    style::{Color, Stylize},
+    text::{Line, Span, Text},
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
+use strum::{EnumCount, EnumProperty, VariantArray};
 
 use crate::{
     inventory::Inventory,
     items::{
         Item, ItemTypes,
-        fish::{SPECIES, Species, SpeciesRef},
+        fish::{FishQuality, SPECIES, Species, SpeciesRef},
         rod::{RODS, Rod},
     },
 };
@@ -94,6 +95,7 @@ pub struct FishEntry {
     highest_value: i32,
     largest: f32,
     heaviest: f32,
+    qualities: [bool; FishQuality::COUNT],
 }
 
 impl FishEntry {
@@ -105,6 +107,7 @@ impl FishEntry {
             highest_value: 0,
             largest: 0.0,
             heaviest: 0.0,
+            qualities: [false; FishQuality::COUNT],
         }
     }
 }
@@ -117,6 +120,8 @@ impl DexEntry for FishEntry {
             self.highest_value = i32::max(self.highest_value, fish.value());
             self.largest = f32::max(self.largest, fish.length);
             self.heaviest = f32::max(self.heaviest, fish.weight);
+
+            self.qualities[fish.quality as usize] = true;
         }
     }
 
@@ -130,15 +135,30 @@ impl DexEntry for FishEntry {
             } else {
                 let mut vec = self.species.0.icon();
                 vec.extend([" ".into(), self.species.0.name.clone().into()]);
-                let l1 = Line::from(vec).bold().underlined();
+                vec = vec.into_iter().map(|i| i.bold().underlined()).collect();
+                vec.push(" ".into());
+                vec.extend(self.qualities.iter().enumerate().map(|(i, &q)| {
+                    let s = Span::from("*").not_underlined().not_bold();
+                    if q {
+                        s.fg(
+                            Color::from_str(FishQuality::VARIANTS[i].get_str("color").unwrap())
+                                .unwrap(),
+                        )
+                    } else {
+                        s.dim()
+                    }
+                }));
+                let l1 = Line::from(vec);
 
-                let l2 = Line::from(vec![
+                vec = vec![
                     format!("Caught: {}(${})", self.count, self.total_value,).into(),
-                ]);
+                    " ".into(),
+                ];
+                let l2 = Line::from(vec);
 
                 let l3 = Line::from(vec![
                     format!(
-                        "Best: {:.1}cm | {:.1}kg | ${}",
+                        "Best: {:.1}cm, {:.1}kg, ${}",
                         self.largest, self.heaviest, self.highest_value
                     )
                     .into(),

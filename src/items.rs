@@ -19,7 +19,7 @@ pub enum ItemTypes {
 pub trait Item {
     fn name(&self) -> String;
     fn value(&self) -> i32;
-    fn info(&self) -> String;
+    fn info(&'_ self) -> Line<'_>;
     fn icon(&self) -> Vec<Span<'_>>;
 }
 
@@ -52,7 +52,7 @@ impl Item for ItemTypes {
             ItemTypes::Rod(rod) => rod.icon(),
         }
     }
-    fn info(&self) -> String {
+    fn info(&'_ self) -> Line<'_> {
         match self {
             ItemTypes::Fish(fish) => fish.info(),
             ItemTypes::Rod(rod) => rod.info(),
