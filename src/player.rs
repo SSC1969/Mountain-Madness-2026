@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use rand::RngExt;
 use serde::{Deserialize, Serialize};
 
@@ -24,8 +22,6 @@ pub enum FishingState {
 pub struct Player {
     pub name: String,
     pub backpack: Backpack,
-    #[serde(skip)]
-    pub backpack_ui_map: HashMap<usize, usize>,
     pub dex: Dex,
     pub money: i32,
 
@@ -120,7 +116,7 @@ impl Player {
 
         // 2 seconds <-> 5 seconds base rate
         self.ticks_left_in_current_bite =
-            (rng.random_range(60.0..150.0) * (100.0 / self.equipped_rod.hook_strength)) as u32;
+            (rng.random_range(60.0..150.0) * (self.equipped_rod.hook_strength / 100.0)) as u32;
     }
 
     pub fn equip(&mut self, rod: Rod) {
@@ -149,7 +145,6 @@ impl Default for Player {
         Self {
             name: "".to_string(),
             backpack,
-            backpack_ui_map: HashMap::default(),
             dex: Dex::default(),
             money: 0,
             equipped_rod: rod.clone(),

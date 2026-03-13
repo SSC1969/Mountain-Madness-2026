@@ -1,35 +1,65 @@
 [
     {
-        "name": "Salmon",
+        "name": "Sockeye Salmon",
         "base_value": 35,
-        "min_len": 30,
-        "max_len": 90,
-        "min_weight": 2,
-        "max_weight": 15,
-        "icon": "o<",
-        "colour": "Blue",
-        "rarity": "Rare"
+        "min_len": 60,
+        "max_len": 84,
+        "min_weight": 2.3,
+        "max_weight": 7.0,
+        "icon": [
+            [
+                "<",
+                {
+                    "fg": "#046304"
+                }
+            ],
+            [
+                ")))>",
+                {
+                    "fg": "#852E2E"
+                }
+            ],
+            [
+                "<",
+                {
+                    "fg": "#046304"
+                }
+            ]
+        ],
+        "rarity": "Common"
     },
     {
         "name": "Halibut",
-        "base_value": 50,
-        "min_len": 50,
-        "max_len": 200,
-        "min_weight": 10,
-        "max_weight": 100,
-        "icon": "o<",
-        "colour": "Green",
-        "rarity": "Epic"
+        "base_value": 80,
+        "min_len": 30,
+        "max_len": 240,
+        "min_weight": 30.0,
+        "max_weight": 200.0,
+        "icon": [
+            [
+                "<( )><",
+                {
+                    "fg": "#825841"
+                }
+            ]
+        ],
+        "rarity": "Common"
     },
     {
         "name": "Trout",
-        "base_value": 20,
-        "min_len": 20,
-        "max_len": 60,
-        "min_weight": 1,
-        "max_weight": 8,
-        "icon": "<((><",
-        "colour": "Red",
+        "base_value": 50,
+        "min_len": 35,
+        "max_len": 130,
+        "min_weight": 0.5,
+        "max_weight": 10.0,
+        "icon": [
+            [
+                "<((((><",
+                {
+                    "fg": "#BF964E"
+                }
+            ]
+        ],
         "rarity": "Common"
     }
 ]

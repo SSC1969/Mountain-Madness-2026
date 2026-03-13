@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -8,6 +10,7 @@ use crate::{
 #[derive(Default, Serialize, Deserialize)]
 pub struct Backpack {
     pub items: Vec<ItemTypes>,
+    pub ui_index_map: HashMap<usize, usize>,
 }
 
 impl Backpack {

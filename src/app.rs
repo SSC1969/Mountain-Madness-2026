@@ -303,7 +303,7 @@ impl App {
                     if let Some(index) = self.backpack_state.selected() {
                         // grab the translated index from the stored ui index map to use for finding the item in
                         // the backpack
-                        if let Some(&new_index) = self.player.backpack_ui_map.get(&index) {
+                        if let Some(&new_index) = self.player.backpack.ui_index_map.get(&index) {
                             self.player.sell(new_index);
                         }
                     }
@@ -347,6 +347,7 @@ impl App {
                 format!("Purchased {}", item.name()),
                 Style::default(),
             )]));
+            self.player.money -= item.value();
             self.player.add_item(item);
             self.events.send(AppEvent::Save);
         } else {
