@@ -128,13 +128,9 @@ impl DexEntry for FishEntry {
                     "Not discovered yet!".into(),
                 ]
             } else {
-                let l1 = Line::from(vec![
-                    self.species.0.icon(),
-                    " ".into(),
-                    self.species.0.name.clone().into(),
-                ])
-                .bold()
-                .underlined();
+                let mut vec = self.species.0.icon();
+                vec.extend([" ".into(), self.species.0.name.clone().into()]);
+                let l1 = Line::from(vec).bold().underlined();
 
                 let l2 = Line::from(vec![
                     format!("Caught: {}(${})", self.count, self.total_value,).into(),

@@ -3,10 +3,7 @@ use std::sync::LazyLock;
 use rand::RngExt;
 use rand_distr::Distribution;
 use rand_distr::weighted::WeightedIndex;
-use ratatui::{
-    style::{Color, Style},
-    text::Span,
-};
+use ratatui::{style::Style, text::Span};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
 use strum::{EnumIter, EnumProperty, IntoEnumIterator, VariantArray};
 
@@ -63,7 +60,7 @@ impl Item for Fish {
     }
 
     fn icon(&self) -> Vec<Span<'_>> {
-        vec![self.species.0.icon()]
+        self.species.0.icon()
     }
 }
 
@@ -100,14 +97,13 @@ pub struct Species {
     pub max_len: u32,
     pub min_weight: u32,
     pub max_weight: u32,
-    pub icon: String,
-    pub colour: Color,
+    pub icon: Vec<(String, Style)>,
     pub rarity: SpeciesRarity,
 }
 
 impl Species {
-    pub fn icon(&self) -> Span<'_> {
-        Span::styled(self.icon.clone(), Style::default().fg(self.colour))
+    pub fn icon(&self) -> Vec<Span<'_>> {
+        self.icon.iter().map(|(p, s)| Span::styled(p, *s)).collect()
     }
 }
 

@@ -6,8 +6,14 @@
         "max_len": 90,
         "min_weight": 2,
         "max_weight": 15,
-        "icon": "o<",
-        "colour": "Blue",
+        "icon": [
+            [
+                "o<",
+                {
+                    "fg": "Blue"
+                }
+            ]
+        ],
         "rarity": "Rare"
     },
     {
@@ -17,8 +23,14 @@
         "max_len": 200,
         "min_weight": 10,
         "max_weight": 100,
-        "icon": "o<",
-        "colour": "Green",
+        "icon": [
+            [
+                "o<",
+                {
+                    "fg": "Green"
+                }
+            ]
+        ],
         "rarity": "Epic"
     },
     {
@@ -28,8 +40,14 @@
         "max_len": 60,
         "min_weight": 1,
         "max_weight": 8,
-        "icon": "<((><",
-        "colour": "Red",
+        "icon": [
+            [
+                "<((><",
+                {
+                    "fg": "Red"
+                }
+            ]
+        ],
         "rarity": "Common"
     }
 ]
