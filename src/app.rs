@@ -210,12 +210,33 @@ impl App {
                         )]));
                     }
                 }
-                AppEvent::ChangeMenu(menu) => self.menu = menu,
-                AppEvent::Navigate(dir) => match dir {
-                    NavigationDirection::Left => self.menu = self.menu.prev(),
-                    NavigationDirection::Right => self.menu = self.menu.next(),
-                    _ => {}
-                },
+                AppEvent::ChangeMenu(menu) => {
+                    match menu {
+                        Menu::Backpack => self.backpack_state.select(None),
+                        Menu::Fincyclopedia => self.dex_state.select(None),
+                        Menu::Market => self.shop.state.select(None),
+                        _ => {}
+                    }
+                    self.menu = menu;
+                }
+                AppEvent::Navigate(dir) => {
+                    match dir {
+                        NavigationDirection::Left => self.menu_tab = (self.menu_tab + 1) % 2,
+                        NavigationDirection::Right => self.menu_tab = (self.menu_tab + 1) % 2,
+                        NavigationDirection::Down => match self.menu {
+                            Menu::Backpack => self.backpack_state.select_next(),
+                            Menu::Fincyclopedia => self.dex_state.select_next(),
+                            Menu::Market => self.shop.state.select_next(),
+                            _ => {}
+                        },
+                        NavigationDirection::Up => match self.menu {
+                            Menu::Backpack => self.backpack_state.select_previous(),
+                            Menu::Fincyclopedia => self.dex_state.select_previous(),
+                            Menu::Market => self.shop.state.select_previous(),
+                            _ => {}
+                        },
+                    };
+                }
                 AppEvent::CastRod => self.player.cast_rod(),
                 AppEvent::FishBiting => {
                     self.input_mode = InputMode::Normal;
@@ -256,7 +277,8 @@ impl App {
                         self.messages.push(msg.clone());
                         self.events.send(AppEvent::SendChat(msg));
                     }
-                    self.input_mode = InputMode::Normal;
+                    self.events
+                        .send(AppEvent::ChangeInputMode(InputMode::Normal));
                 }
                 KeyCode::Esc => self
                     .events
@@ -278,6 +300,18 @@ impl App {
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
                 self.events.send(AppEvent::Quit)
             }
+            KeyCode::Up => self
+                .events
+                .send(AppEvent::Navigate(NavigationDirection::Up)),
+            KeyCode::Down => self
+                .events
+                .send(AppEvent::Navigate(NavigationDirection::Down)),
+            KeyCode::Left => self
+                .events
+                .send(AppEvent::Navigate(NavigationDirection::Left)),
+            KeyCode::Right => self
+                .events
+                .send(AppEvent::Navigate(NavigationDirection::Right)),
             KeyCode::Char(c) => match c {
                 't' => self
                     .events
@@ -299,10 +333,6 @@ impl App {
     fn handle_menu_key_events(&mut self, key_event: KeyEvent) -> color_eyre::Result<()> {
         match self.menu {
             Menu::Backpack => match key_event.code {
-                KeyCode::Up => self.backpack_state.select_previous(),
-                KeyCode::Down => self.backpack_state.select_next(),
-                KeyCode::Left => self.menu_tab = (self.menu_tab + 1) % 2,
-                KeyCode::Right => self.menu_tab = (self.menu_tab + 1) % 2,
                 KeyCode::Enter => {
                     if let Some(index) = self.backpack_state.selected() {
                         match &self.player.backpack.items[index] {
@@ -326,19 +356,7 @@ impl App {
                 }
                 _ => {}
             },
-            Menu::Fincyclopedia => match key_event.code {
-                KeyCode::Up => self.dex_state.select_previous(),
-                KeyCode::Down => self.dex_state.select_next(),
-                KeyCode::Left => self.menu_tab = (self.menu_tab + 1) % 2,
-                KeyCode::Right => self.menu_tab = (self.menu_tab + 1) % 2,
-
-                _ => {}
-            },
             Menu::Market => match key_event.code {
-                KeyCode::Up => self.shop.state.select_previous(),
-                KeyCode::Down => self.shop.state.select_next(),
-                KeyCode::Left => self.menu_tab = (self.menu_tab + 1) % 2,
-                KeyCode::Right => self.menu_tab = (self.menu_tab + 1) % 2,
                 KeyCode::Enter => {
                     if let Some(index) = self.shop.state.selected() {
                         // grab the translated index from the stored ui index map to use for finding the item in
