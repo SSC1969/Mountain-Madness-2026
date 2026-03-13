@@ -28,7 +28,12 @@ pub struct Fish {
 impl Fish {
     pub fn generate() -> Self {
         let mut rng = rand::rng();
-        let s = &SPECIES[rng.random_range(0..SPECIES.len())];
+
+        // generate a fish based on their rarity
+        let weights: Vec<f32> = SPECIES.iter().map(|s| s.rarity.odds()).collect();
+        let dist = WeightedIndex::new(&weights).unwrap();
+        let s = &SPECIES[dist.sample(&mut rng)];
+
         let length = rng.random_range(s.min_len..s.max_len);
         let weight = rng.random_range(s.min_weight..s.max_weight);
         let quality = FishQuality::generate();
@@ -116,7 +121,9 @@ impl Species {
     }
 }
 
-#[derive(Default, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy, EnumIter, Serialize)]
+#[derive(
+    VariantArray, Default, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy, EnumIter, Serialize,
+)]
 pub enum SpeciesRarity {
     #[default]
     Common,
@@ -149,15 +156,13 @@ impl SpeciesRarity {
     PartialEq, Eq, Debug, Hash, Clone, VariantArray, EnumProperty, EnumIter, Serialize, Deserialize,
 )]
 pub enum FishQuality {
-    #[strum(props(w = 50, v = 3))]
+    #[strum(props(w = 1250, v = 3))]
     Shoddy,
-    #[strum(props(w = 40, v = 5))]
+    #[strum(props(w = 750, v = 5))]
     Mediocre,
-    #[strum(props(w = 30, v = 10))]
+    #[strum(props(w = 350, v = 10))]
     Average,
-    #[strum(props(w = 10, v = 20))]
-    Fine,
-    #[strum(props(w = 5, v = 50))]
+    #[strum(props(w = 15, v = 50))]
     Lovely,
     #[strum(props(w = 1, v = 100))]
     Resplendent,
