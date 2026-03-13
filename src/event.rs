@@ -55,7 +55,6 @@ pub enum AppEvent {
     CastRod,
     FishBiting,
     FishCatching,
-    FishCaught,
     ChangeRod(Rod),
     ShowToast(Vec<(String, Style)>),
 

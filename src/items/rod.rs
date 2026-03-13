@@ -36,8 +36,11 @@ impl Item for Rod {
         self.value
     }
 
-    fn info(&self) -> String {
-        format!("Lure: {} | Hook: {}", self.lure_mult, self.hook_strength)
+    fn info(&'_ self) -> Line<'_> {
+        Line::from(format!(
+            "Lure: {} | Hook: {}",
+            self.lure_mult, self.hook_strength
+        ))
     }
 
     fn icon(&self) -> Vec<Span<'_>> {

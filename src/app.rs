@@ -2,6 +2,7 @@ use std::{
     fs::{File, create_dir_all},
     io::{BufReader, BufWriter, Write},
     path::PathBuf,
+    str::FromStr,
 };
 
 use crate::{
@@ -18,15 +19,21 @@ use ratatui::{
     style::{Color, Style},
     widgets::ListState,
 };
-use strum::EnumCount;
+use strum::{EnumCount, EnumIter, EnumProperty};
 use tui_input::{Input, backend::crossterm::EventHandler as crosstermEventHandler};
 
-#[derive(Clone, Default, Debug, EnumCount)]
+#[derive(Clone, Default, Debug, EnumCount, EnumIter, EnumProperty)]
 pub enum Menu {
     #[default]
+    #[strum(props(c = "#FF8AAF"))]
     Backpack,
+    #[strum(props(c = "#FF9F8A"))]
     Fincyclopedia,
+    #[strum(props(c = "#FFDA8A"))]
     Market,
+    #[strum(props(c = "#8AFFDA"))]
+    Help,
+    #[strum(props(c = "#8AAFFF"))]
     Options,
 }
 
@@ -41,7 +48,8 @@ impl Menu {
         match self {
             Menu::Backpack => Menu::Fincyclopedia,
             Menu::Fincyclopedia => Menu::Market,
-            Menu::Market => Menu::Options,
+            Menu::Market => Menu::Help,
+            Menu::Help => Menu::Options,
             Menu::Options => Menu::Backpack,
         }
     }
@@ -51,8 +59,13 @@ impl Menu {
             Menu::Backpack => Menu::Options,
             Menu::Fincyclopedia => Menu::Backpack,
             Menu::Market => Menu::Fincyclopedia,
-            Menu::Options => Menu::Fincyclopedia,
+            Menu::Help => Menu::Market,
+            Menu::Options => Menu::Help,
         }
+    }
+
+    pub fn color(&self) -> Color {
+        Color::from_str(self.get_str("c").unwrap()).unwrap()
     }
 }
 
@@ -197,22 +210,42 @@ impl App {
                         )]));
                     }
                 }
-                AppEvent::ChangeMenu(menu) => self.menu = menu,
-                AppEvent::Navigate(dir) => match dir {
-                    NavigationDirection::Left => self.menu = self.menu.prev(),
-                    NavigationDirection::Right => self.menu = self.menu.next(),
-                    _ => {}
-                },
+                AppEvent::ChangeMenu(menu) => {
+                    match menu {
+                        Menu::Backpack => self.backpack_state.select(None),
+                        Menu::Fincyclopedia => self.dex_state.select(None),
+                        Menu::Market => self.shop.state.select(None),
+                        _ => {}
+                    }
+                    self.menu = menu;
+                }
+                AppEvent::Navigate(dir) => {
+                    match dir {
+                        NavigationDirection::Left => self.menu_tab = (self.menu_tab + 1) % 2,
+                        NavigationDirection::Right => self.menu_tab = (self.menu_tab + 1) % 2,
+                        NavigationDirection::Down => match self.menu {
+                            Menu::Backpack => self.backpack_state.select_next(),
+                            Menu::Fincyclopedia => self.dex_state.select_next(),
+                            Menu::Market => self.shop.state.select_next(),
+                            _ => {}
+                        },
+                        NavigationDirection::Up => match self.menu {
+                            Menu::Backpack => self.backpack_state.select_previous(),
+                            Menu::Fincyclopedia => self.dex_state.select_previous(),
+                            Menu::Market => self.shop.state.select_previous(),
+                            _ => {}
+                        },
+                    };
+                }
                 AppEvent::CastRod => self.player.cast_rod(),
                 AppEvent::FishBiting => {
+                    self.input_mode = InputMode::Normal;
                     self.player.bite();
-                    self.events.send(AppEvent::SendChat("biting...".to_owned()));
                 }
                 AppEvent::FishCatching => {
                     // this updates the player state as well as getting the caught fish's icon
                     self.recent_catch = Some(self.player.catch_fish());
                 }
-                AppEvent::FishCaught => self.player.post_catch(),
                 AppEvent::ChangeRod(rod) => self.player.equip(rod),
                 AppEvent::ShowToast(msg) => self.toast.start(msg),
 
@@ -240,11 +273,12 @@ impl App {
                     self.input.reset();
                     if self.player.name == "" {
                         self.events.send(AppEvent::ChangePlayerName(msg));
-                        self.input_mode = InputMode::Normal;
                     } else {
                         self.messages.push(msg.clone());
                         self.events.send(AppEvent::SendChat(msg));
                     }
+                    self.events
+                        .send(AppEvent::ChangeInputMode(InputMode::Normal));
                 }
                 KeyCode::Esc => self
                     .events
@@ -266,13 +300,29 @@ impl App {
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
                 self.events.send(AppEvent::Quit)
             }
-            KeyCode::Char('t') => self
+            KeyCode::Up => self
                 .events
-                .send(AppEvent::ChangeInputMode(InputMode::Editing)),
-            KeyCode::Char('m') => self.events.send(AppEvent::ChangeMenu(Menu::Market)),
-            KeyCode::Char('p') => self.events.send(AppEvent::ChangeMenu(Menu::Fincyclopedia)),
-            KeyCode::Char('b') => self.events.send(AppEvent::ChangeMenu(Menu::Backpack)),
-            KeyCode::Char('o') => self.events.send(AppEvent::ChangeMenu(Menu::Options)),
+                .send(AppEvent::Navigate(NavigationDirection::Up)),
+            KeyCode::Down => self
+                .events
+                .send(AppEvent::Navigate(NavigationDirection::Down)),
+            KeyCode::Left => self
+                .events
+                .send(AppEvent::Navigate(NavigationDirection::Left)),
+            KeyCode::Right => self
+                .events
+                .send(AppEvent::Navigate(NavigationDirection::Right)),
+            KeyCode::Char(c) => match c {
+                't' => self
+                    .events
+                    .send(AppEvent::ChangeInputMode(InputMode::Editing)),
+                'm' => self.events.send(AppEvent::ChangeMenu(Menu::Market)),
+                'p' => self.events.send(AppEvent::ChangeMenu(Menu::Fincyclopedia)),
+                'b' => self.events.send(AppEvent::ChangeMenu(Menu::Backpack)),
+                'h' => self.events.send(AppEvent::ChangeMenu(Menu::Help)),
+                'o' => self.events.send(AppEvent::ChangeMenu(Menu::Options)),
+                _ => self.handle_menu_key_events(key_event)?,
+            },
 
             // Send any remaining events to the open menu for processing
             _ => self.handle_menu_key_events(key_event)?,
@@ -283,10 +333,6 @@ impl App {
     fn handle_menu_key_events(&mut self, key_event: KeyEvent) -> color_eyre::Result<()> {
         match self.menu {
             Menu::Backpack => match key_event.code {
-                KeyCode::Up => self.backpack_state.select_previous(),
-                KeyCode::Down => self.backpack_state.select_next(),
-                KeyCode::Left => self.menu_tab = (self.menu_tab + 1) % 2,
-                KeyCode::Right => self.menu_tab = (self.menu_tab + 1) % 2,
                 KeyCode::Enter => {
                     if let Some(index) = self.backpack_state.selected() {
                         match &self.player.backpack.items[index] {
@@ -310,19 +356,7 @@ impl App {
                 }
                 _ => {}
             },
-            Menu::Fincyclopedia => match key_event.code {
-                KeyCode::Up => self.dex_state.select_previous(),
-                KeyCode::Down => self.dex_state.select_next(),
-                KeyCode::Left => self.menu_tab = (self.menu_tab + 1) % 2,
-                KeyCode::Right => self.menu_tab = (self.menu_tab + 1) % 2,
-
-                _ => {}
-            },
             Menu::Market => match key_event.code {
-                KeyCode::Up => self.shop.state.select_previous(),
-                KeyCode::Down => self.shop.state.select_next(),
-                KeyCode::Left => self.menu_tab = (self.menu_tab + 1) % 2,
-                KeyCode::Right => self.menu_tab = (self.menu_tab + 1) % 2,
                 KeyCode::Enter => {
                     if let Some(index) = self.shop.state.selected() {
                         // grab the translated index from the stored ui index map to use for finding the item in
@@ -368,6 +402,11 @@ impl App {
         self.autosave_timer = self.autosave_timer.saturating_sub(1);
         if self.autosave_timer <= 0 {
             self.events.send(AppEvent::Save);
+        }
+
+        if self.player.ticks_until_next_bite <= 0 && self.player.fishing_state == FishingState::Idle
+        {
+            self.events.send(AppEvent::FishBiting);
         }
 
         // Update animation based on the player's state

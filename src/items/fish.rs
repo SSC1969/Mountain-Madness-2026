@@ -1,11 +1,14 @@
-use std::sync::LazyLock;
+use std::{str::FromStr, sync::LazyLock};
 
 use rand::RngExt;
 use rand_distr::Distribution;
 use rand_distr::weighted::WeightedIndex;
-use ratatui::{style::Style, text::Span};
+use ratatui::{
+    style::{Color, Style, Stylize},
+    text::{Line, Span},
+};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
-use strum::{EnumIter, EnumProperty, IntoEnumIterator, VariantArray};
+use strum::{EnumCount, EnumIter, EnumProperty, IntoEnumIterator, VariantArray};
 
 use crate::items::Item;
 
@@ -66,11 +69,12 @@ impl Item for Fish {
             * (weight_factor + length_factor)) as i32
     }
 
-    fn info(&self) -> String {
-        format!(
-            "{:.1}kg | {:.1}cm - {:?}",
-            self.weight, self.length, self.quality
-        )
+    fn info(&'_ self) -> Line<'_> {
+        Line::from(vec![
+            format!("{:.1}kg | {:.1}cm - ", self.weight, self.length).into(),
+            Span::from(format!("{:?}", self.quality))
+                .fg(Color::from_str(self.quality.get_str("color").unwrap()).unwrap()),
+        ])
     }
 
     fn icon(&self) -> Vec<Span<'_>> {
@@ -153,18 +157,28 @@ impl SpeciesRarity {
 }
 
 #[derive(
-    PartialEq, Eq, Debug, Hash, Clone, VariantArray, EnumProperty, EnumIter, Serialize, Deserialize,
+    PartialEq,
+    Eq,
+    Debug,
+    Hash,
+    Clone,
+    VariantArray,
+    EnumProperty,
+    EnumIter,
+    Serialize,
+    Deserialize,
+    EnumCount,
 )]
 pub enum FishQuality {
-    #[strum(props(w = 1250, v = 3))]
+    #[strum(props(w = 1250, v = 3, color = "#946851"))]
     Shoddy,
-    #[strum(props(w = 750, v = 5))]
+    #[strum(props(w = 750, v = 5, color = "#8AC944"))]
     Mediocre,
-    #[strum(props(w = 350, v = 10))]
+    #[strum(props(w = 350, v = 10, color = "#44C7C9"))]
     Average,
-    #[strum(props(w = 15, v = 50))]
+    #[strum(props(w = 15, v = 50, color = "#b9286e"))]
     Lovely,
-    #[strum(props(w = 1, v = 100))]
+    #[strum(props(w = 1, v = 100, color = "#C6A9DE"))]
     Resplendent,
 }
 

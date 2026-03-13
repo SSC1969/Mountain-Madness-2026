@@ -55,22 +55,25 @@ static CAUGHT_FRAME: &str = r#"
 ／⌒＼／⌒＼／⌒＼／⌒＼|彡~ﾟ　゜~ ~。゜　~ ~　~ ~~　~ ~ `~ ~　~ ~　~ ~~　~゜~ ~。゜　~ ~　~ ~~　~゜~ ~。゜
 "#;
 
+use std::str::FromStr;
+
 use ratatui::{
     buffer::Buffer,
-    layout::{Alignment, Constraint, Flex, Layout, Rect, Spacing},
+    layout::{Alignment, Constraint, Flex, Layout, Offset, Rect, Spacing},
     style::{Color, Style, Stylize},
     symbols::merge::MergeStrategy,
     text::{Line, Span},
     widgets::{
         Block, BorderType, Clear, List, ListItem, Padding, Paragraph, StatefulWidget, Tabs, Widget,
+        Wrap,
     },
 };
-use strum::EnumCount;
+use strum::{EnumCount, EnumProperty, IntoEnumIterator};
 
 use crate::{
     app::{Anim, App, InputMode, Menu},
     inventory::dex::{DexEntries, DexEntry},
-    items::{Item, ItemTypes},
+    items::{Item, ItemTypes, fish::FishQuality},
 };
 
 impl Widget for &mut App {
@@ -98,8 +101,6 @@ impl Widget for &mut App {
             Layout::vertical([Constraint::Fill(1), Constraint::Max(3)]).areas(chatbox);
 
         self.render_viewport(viewport, buf);
-        self.render_menu(menu, buf);
-        self.render_toolbar(toolbar, buf);
 
         // Render the name prompt if the player has no name; otherwise, render the chat
         if self.player.name == "" {
@@ -108,6 +109,9 @@ impl Widget for &mut App {
             self.render_messages(messages, buf);
             self.render_input(input, buf);
         }
+
+        self.render_toolbar(toolbar, buf);
+        self.render_menu(menu, buf);
     }
 }
 
@@ -139,17 +143,24 @@ impl App {
     }
 
     // move to bottom of impl
-    fn render_input(&mut self, area: Rect, buf: &mut Buffer) {
+    fn render_input(&mut self, mut area: Rect, buf: &mut Buffer) {
+        area = area.offset(Offset::new(-1, -1));
+
         let width = area.width.max(3) - 3;
         let scroll = self.input.visual_scroll(width as usize);
         let style = match self.input_mode {
             InputMode::Normal => Style::default(),
             InputMode::Editing => Color::Yellow.into(),
         };
+
         let input = Paragraph::new(self.input.value())
             .style(style)
             .scroll((0, scroll as u16))
-            .block(Block::bordered());
+            .block(
+                Block::bordered()
+                    .border_type(BorderType::Rounded)
+                    .merge_borders(MergeStrategy::Fuzzy),
+            );
         input.render(area, buf);
 
         if self.input_mode == InputMode::Editing {
@@ -158,10 +169,16 @@ impl App {
         }
     }
 
-    fn render_messages(&self, area: Rect, buf: &mut Buffer) {
+    fn render_messages(&self, mut area: Rect, buf: &mut Buffer) {
+        area = area.offset(Offset::new(-1, -1));
+
         let start = self.messages.len().saturating_sub(3);
         let messages = self.messages[start..].iter().map(String::as_str);
-        let messages = List::new(messages).block(Block::bordered().title("Messages"));
+        let messages = List::new(messages).block(
+            Block::bordered()
+                .border_type(BorderType::Rounded)
+                .title("Messages"),
+        );
         // multiple renders()'s so specify widget
         Widget::render(messages, area, buf);
     }
@@ -183,7 +200,7 @@ impl App {
                     .right_aligned(),
             )
             .border_type(BorderType::Rounded)
-            .merge_borders(MergeStrategy::Exact);
+            .merge_borders(MergeStrategy::Replace);
 
         let inner = block.inner(area);
 
@@ -228,6 +245,7 @@ impl App {
                 .collect();
             Paragraph::new(Line::from(spans))
                 .right_aligned()
+                .italic()
                 .bold()
                 .render(toast_area, buf);
         }
@@ -236,7 +254,8 @@ impl App {
     fn render_toolbar(&self, area: Rect, buf: &mut Buffer) {
         let block = Block::bordered()
             .border_type(BorderType::Rounded)
-            .merge_borders(MergeStrategy::Exact);
+            .border_style(self.menu.color())
+            .merge_borders(MergeStrategy::Replace);
 
         let inner = block.inner(area).centered_horizontally(Constraint::Fill(1));
         let constraints = (0..Menu::COUNT).map(|_| Constraint::Ratio(1, Menu::COUNT as u32));
@@ -244,28 +263,91 @@ impl App {
             .flex(Flex::Center)
             .split(inner);
 
-        Line::from("<b> Backpack").centered().render(layout[0], buf);
-        Line::from("<p> Fincyclopedia")
-            .centered()
-            .render(layout[1], buf);
-        Line::from("<m> Market").centered().render(layout[2], buf);
-        Line::from("<o> Options").centered().render(layout[3], buf);
-
         block.render(area, buf);
+
+        let mut bp = Line::from("<b> Backpack")
+            .centered()
+            .fg(Menu::Backpack.color());
+        let mut fincyclopedia = Line::from("<p> Fincyclopedia")
+            .centered()
+            .fg(Menu::Fincyclopedia.color());
+        let mut market = Line::from("<m> Market").centered().fg(Menu::Market.color());
+        let mut help = Line::from("<h> Help").centered().fg(Menu::Help.color());
+        let mut options = Line::from("<o> Options")
+            .centered()
+            .fg(Menu::Options.color());
+
+        match self.menu {
+            Menu::Backpack => bp = bp.reversed(),
+            Menu::Fincyclopedia => fincyclopedia = fincyclopedia.reversed(),
+            Menu::Market => market = market.reversed(),
+            Menu::Help => help = help.reversed(),
+            Menu::Options => options = options.reversed(),
+        }
+
+        bp.render(layout[0], buf);
+        fincyclopedia.render(layout[1], buf);
+        market.render(layout[2], buf);
+        help.render(layout[3], buf);
+        options.render(layout[4], buf);
     }
 
     fn render_menu(&mut self, area: Rect, buf: &mut Buffer) {
         let block = Block::bordered()
             .title(format!("{:?}", self.menu))
+            .title_style(Style::default().fg(self.menu.color()))
             .title_alignment(Alignment::Left)
             .border_type(BorderType::Rounded)
-            .merge_borders(MergeStrategy::Exact)
-            .padding(Padding::horizontal(1));
+            .border_style(self.menu.color())
+            .merge_borders(MergeStrategy::Fuzzy)
+            .padding(Padding::new(1, 1, 0, 0));
 
         match self.menu {
             Menu::Backpack => self.render_backpack(area, buf, block),
             Menu::Fincyclopedia => self.render_dex(area, buf, block),
             Menu::Market => self.render_shop(area, buf, block),
+            Menu::Help => {
+                let text = vec![
+                    Line::from("- Press <f> to catch fish!"),
+                    Line::from(""),
+                    Line::from("- Press <t> to chat with other people fishing on your network!"),
+                    Line::from(""),
+                    Line::from(
+                        "- Rods have two stats: Lure, which determines how fast fish will bite, and Hook, which determines how long fish will stay on the hook for.",
+                    ),
+                    Line::from(""),
+                    Line::from({
+                        let mut v = FishQuality::iter()
+                            .flat_map(|q| {
+                                if q == FishQuality::Resplendent {
+                                    [
+                                        Span::from("and "),
+                                        Span::from(format!("{:?}", q))
+                                            .fg(Color::from_str(q.get_str("color").unwrap())
+                                                .unwrap()),
+                                    ]
+                                } else {
+                                    [
+                                        Span::from(format!("{:?}", q))
+                                            .fg(Color::from_str(q.get_str("color").unwrap())
+                                                .unwrap()),
+                                        Span::from(", "),
+                                    ]
+                                }
+                            })
+                            .collect::<Vec<_>>();
+                        v.insert(0, Span::from("- Fish come in 5 qualities: "));
+                        v.push(Span::from(". Try to catch them all!"));
+
+                        v
+                    }),
+                ];
+
+                Paragraph::new(text)
+                    .wrap(Wrap::default())
+                    .block(block)
+                    .render(area, buf);
+            }
             Menu::Options => Paragraph::new("Options")
                 .centered()
                 .block(block)
@@ -277,9 +359,10 @@ impl App {
         let items = self.player.backpack.items.clone();
 
         let inner = block.inner(area);
-        let [tabs_area, content_area, controls_area] = Layout::vertical(vec![
+        let [tabs_area, content_area, _, controls_area] = Layout::vertical(vec![
             Constraint::Length(1),
             Constraint::Min(0),
+            Constraint::Length(1),
             Constraint::Length(1),
         ])
         .areas(inner);
@@ -292,6 +375,7 @@ impl App {
             .flex(Flex::Center)
             .areas(tabs_area);
         Tabs::new(vec!["Fish", "Tools"])
+            .style(self.menu.color())
             .bold()
             .select(self.menu_tab as usize)
             .render(centered_tabs, buf);
@@ -341,9 +425,10 @@ impl App {
         let mut items = self.player.dex.get_all();
 
         let inner = block.inner(area);
-        let [tabs_area, content_area, controls_area] = Layout::vertical(vec![
+        let [tabs_area, content_area, _, controls_area] = Layout::vertical(vec![
             Constraint::Length(1),
             Constraint::Min(0),
+            Constraint::Length(1),
             Constraint::Length(1),
         ])
         .areas(inner);
@@ -356,6 +441,7 @@ impl App {
             .flex(Flex::Center)
             .areas(tabs_area);
         Tabs::new(vec!["Fish", "Tools"])
+            .style(self.menu.color())
             .bold()
             .select(self.menu_tab as usize)
             .render(centered_tabs, buf);
@@ -376,9 +462,10 @@ impl App {
 
     fn render_shop(&mut self, area: Rect, buf: &mut Buffer, block: Block) {
         let inner = block.inner(area);
-        let [tabs_area, content_area, controls_area] = Layout::vertical(vec![
+        let [tabs_area, content_area, _, controls_area] = Layout::vertical(vec![
             Constraint::Length(1),
             Constraint::Min(0),
+            Constraint::Length(1),
             Constraint::Length(1),
         ])
         .areas(inner);
@@ -392,6 +479,7 @@ impl App {
             .flex(Flex::Center)
             .areas(tabs_area);
         Tabs::new(vec!["Fish", "Tools"])
+            .style(self.menu.color())
             .bold()
             .select(self.menu_tab as usize)
             .render(centered_tabs, buf);
