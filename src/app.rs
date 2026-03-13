@@ -18,15 +18,16 @@ use ratatui::{
     style::{Color, Style},
     widgets::ListState,
 };
-use strum::EnumCount;
+use strum::{EnumCount, EnumIter};
 use tui_input::{Input, backend::crossterm::EventHandler as crosstermEventHandler};
 
-#[derive(Clone, Default, Debug, EnumCount)]
+#[derive(Clone, Default, Debug, EnumCount, EnumIter)]
 pub enum Menu {
     #[default]
     Backpack,
     Fincyclopedia,
     Market,
+    Help,
     Options,
 }
 
@@ -41,7 +42,8 @@ impl Menu {
         match self {
             Menu::Backpack => Menu::Fincyclopedia,
             Menu::Fincyclopedia => Menu::Market,
-            Menu::Market => Menu::Options,
+            Menu::Market => Menu::Help,
+            Menu::Help => Menu::Options,
             Menu::Options => Menu::Backpack,
         }
     }
@@ -51,7 +53,8 @@ impl Menu {
             Menu::Backpack => Menu::Options,
             Menu::Fincyclopedia => Menu::Backpack,
             Menu::Market => Menu::Fincyclopedia,
-            Menu::Options => Menu::Fincyclopedia,
+            Menu::Help => Menu::Market,
+            Menu::Options => Menu::Help,
         }
     }
 }
@@ -265,13 +268,17 @@ impl App {
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
                 self.events.send(AppEvent::Quit)
             }
-            KeyCode::Char('t') => self
-                .events
-                .send(AppEvent::ChangeInputMode(InputMode::Editing)),
-            KeyCode::Char('m') => self.events.send(AppEvent::ChangeMenu(Menu::Market)),
-            KeyCode::Char('p') => self.events.send(AppEvent::ChangeMenu(Menu::Fincyclopedia)),
-            KeyCode::Char('b') => self.events.send(AppEvent::ChangeMenu(Menu::Backpack)),
-            KeyCode::Char('o') => self.events.send(AppEvent::ChangeMenu(Menu::Options)),
+            KeyCode::Char(c) => match c {
+                't' => self
+                    .events
+                    .send(AppEvent::ChangeInputMode(InputMode::Editing)),
+                'm' => self.events.send(AppEvent::ChangeMenu(Menu::Market)),
+                'p' => self.events.send(AppEvent::ChangeMenu(Menu::Fincyclopedia)),
+                'b' => self.events.send(AppEvent::ChangeMenu(Menu::Backpack)),
+                'h' => self.events.send(AppEvent::ChangeMenu(Menu::Help)),
+                'o' => self.events.send(AppEvent::ChangeMenu(Menu::Options)),
+                _ => self.handle_menu_key_events(key_event)?,
+            },
 
             // Send any remaining events to the open menu for processing
             _ => self.handle_menu_key_events(key_event)?,

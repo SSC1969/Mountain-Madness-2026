@@ -55,6 +55,8 @@ static CAUGHT_FRAME: &str = r#"
 ／⌒＼／⌒＼／⌒＼／⌒＼|彡~ﾟ　゜~ ~。゜　~ ~　~ ~~　~ ~ `~ ~　~ ~　~ ~~　~゜~ ~。゜　~ ~　~ ~~　~゜~ ~。゜
 "#;
 
+use std::str::FromStr;
+
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Flex, Layout, Rect, Spacing},
@@ -63,14 +65,15 @@ use ratatui::{
     text::{Line, Span},
     widgets::{
         Block, BorderType, Clear, List, ListItem, Padding, Paragraph, StatefulWidget, Tabs, Widget,
+        Wrap,
     },
 };
-use strum::EnumCount;
+use strum::{EnumCount, EnumProperty, IntoEnumIterator};
 
 use crate::{
     app::{Anim, App, InputMode, Menu},
     inventory::dex::{DexEntries, DexEntry},
-    items::{Item, ItemTypes},
+    items::{Item, ItemTypes, fish::FishQuality},
 };
 
 impl Widget for &mut App {
@@ -244,14 +247,15 @@ impl App {
             .flex(Flex::Center)
             .split(inner);
 
+        block.render(area, buf);
+
         Line::from("<b> Backpack").centered().render(layout[0], buf);
         Line::from("<p> Fincyclopedia")
             .centered()
             .render(layout[1], buf);
         Line::from("<m> Market").centered().render(layout[2], buf);
-        Line::from("<o> Options").centered().render(layout[3], buf);
-
-        block.render(area, buf);
+        Line::from("<h> Help").centered().render(layout[3], buf);
+        Line::from("<o> Options").centered().render(layout[4], buf);
     }
 
     fn render_menu(&mut self, area: Rect, buf: &mut Buffer) {
@@ -266,6 +270,48 @@ impl App {
             Menu::Backpack => self.render_backpack(area, buf, block),
             Menu::Fincyclopedia => self.render_dex(area, buf, block),
             Menu::Market => self.render_shop(area, buf, block),
+            Menu::Help => {
+                let text = vec![
+                    Line::from("- Press <f> to catch fish!"),
+                    Line::from(""),
+                    Line::from("- Press <t> to chat with other people fishing on your network!"),
+                    Line::from(""),
+                    Line::from(
+                        "- Rods have two stats: Lure, which determines how fast fish will bite, and Hook, which determines how long fish will stay on the hook for.",
+                    ),
+                    Line::from(""),
+                    Line::from({
+                        let mut v = FishQuality::iter()
+                            .flat_map(|q| {
+                                if q == FishQuality::Resplendent {
+                                    [
+                                        Span::from("and "),
+                                        Span::from(format!("{:?}", q))
+                                            .fg(Color::from_str(q.get_str("color").unwrap())
+                                                .unwrap()),
+                                    ]
+                                } else {
+                                    [
+                                        Span::from(format!("{:?}", q))
+                                            .fg(Color::from_str(q.get_str("color").unwrap())
+                                                .unwrap()),
+                                        Span::from(", "),
+                                    ]
+                                }
+                            })
+                            .collect::<Vec<_>>();
+                        v.insert(0, Span::from("- Fish come in 5 qualities: "));
+                        v.push(Span::from(". Try to catch them all!"));
+
+                        v
+                    }),
+                ];
+
+                Paragraph::new(text)
+                    .wrap(Wrap::default())
+                    .block(block)
+                    .render(area, buf);
+            }
             Menu::Options => Paragraph::new("Options")
                 .centered()
                 .block(block)
