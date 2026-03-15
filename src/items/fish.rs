@@ -81,9 +81,8 @@ impl Item for Fish {
             }
         };
 
-        (species.0.base_value as f32
-            * (self.quality.get_int("v").unwrap() as f32 / 10.0)
-            * size_mult) as i32
+        (species.0.value() as f32 * (self.quality.get_int("v").unwrap() as f32 / 10.0) * size_mult)
+            as i32
     }
 
     fn info(&'_ self) -> Line<'_> {
@@ -127,7 +126,6 @@ impl Serialize for SpeciesRef {
 #[derive(PartialEq, Deserialize, Serialize, Default, Debug, Clone)]
 pub struct Species {
     pub name: String,
-    pub base_value: u32,
     pub avg_len: f32,
     pub avg_weight: f32,
     pub icon: Vec<(String, Style)>,
@@ -137,6 +135,10 @@ pub struct Species {
 impl Species {
     pub fn icon(&self) -> Vec<Span<'_>> {
         self.icon.iter().map(|(p, s)| Span::styled(p, *s)).collect()
+    }
+
+    pub fn value(&self) -> i32 {
+        self.rarity.multiplier()
     }
 }
 
@@ -152,12 +154,12 @@ pub enum SpeciesRarity {
 }
 
 impl SpeciesRarity {
-    pub fn multiplier(&self) -> f32 {
+    pub fn multiplier(&self) -> i32 {
         match self {
-            SpeciesRarity::Common => 1.0,
-            SpeciesRarity::Rare => 2.0,
-            SpeciesRarity::Epic => 5.0,
-            SpeciesRarity::Legendary => 10.0,
+            SpeciesRarity::Common => 50,
+            SpeciesRarity::Rare => 150,
+            SpeciesRarity::Epic => 500,
+            SpeciesRarity::Legendary => 2000,
         }
     }
 

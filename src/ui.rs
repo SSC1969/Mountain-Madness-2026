@@ -186,11 +186,11 @@ impl App {
     fn render_viewport(&self, area: Rect, buf: &mut Buffer) {
         let block = Block::bordered()
             .title(format!(
-                "Fishin' [{:?}, {} to bite, {} in bite, {} in anim]",
-                self.player.fishing_state,
-                self.player.ticks_until_next_bite,
-                self.player.ticks_left_in_current_bite,
-                self.player.catch_anim_timer
+                "Fishin'" // "Fishin' [{:?}, {} to bite, {} in bite, {} in anim]",
+                          // self.player.fishing_state,
+                          // self.player.ticks_until_next_bite,
+                          // self.player.ticks_left_in_current_bite,
+                          // self.player.catch_anim_timer
             ))
             .title_alignment(Alignment::Left)
             .title_top(

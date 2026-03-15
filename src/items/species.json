@@ -1,59 +1,269 @@
 [
-    {
-        "name": "Sockeye Salmon",
-        "base_value": 35,
-        "avg_len": 72,
-        "avg_weight": 4.8,
-        "icon": [
-            [
-                "<",
-                {
-                    "fg": "#046304"
-                }
-            ],
-            [
-                ")))>",
-                {
-                    "fg": "#852E2E"
-                }
-            ],
-            [
-                "<",
-                {
-                    "fg": "#046304"
-                }
-            ]
-        ],
-        "rarity": "Common"
-    },
-    {
-        "name": "Halibut",
-        "base_value": 80,
-        "avg_len": 135,
-        "avg_weight": 115.0,
-        "icon": [
-            [
-                "<( )><",
-                {
-                    "fg": "#825841"
-                }
-            ]
-        ],
-        "rarity": "Common"
-    },
-    {
-        "name": "Trout",
-        "base_value": 50,
-        "avg_len": 83,
-        "avg_weight": 5.3,
-        "icon": [
-            [
-                "<((((><",
-                {
-                    "fg": "#BF964E"
-                }
-            ]
-        ],
-        "rarity": "Common"
-    }
+  {
+    "name": "Carp",
+    "avg_len": 40,
+    "avg_weight": 1,
+    "icon": [
+      [ "<;))><", { "fg": "#b6d7a8" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Catfish",
+    "avg_len": 75,
+    "avg_weight": 7.5,
+    "icon": [
+      [ "<;=><", { "fg": "#45818e" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Chub",
+    "avg_len": 30,
+    "avg_weight": 1.5,
+    "icon": [
+      [ "<•<", { "fg": "#999999" } ],
+      [ ">", { "fg": "#dd7e6b" } ],
+      [ "<", { "fg": "#999999" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Clownfish",
+    "avg_len": 8,
+    "avg_weight": 0.1,
+    "icon": [
+      [ "<", { "fg": "#ff9900" } ],
+      [ "<", { "fg": "#ffffff" } ],
+      [ ">", { "fg": "#ff9900" } ],
+      [ "<", { "fg": "#ffffff" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Dace",
+    "avg_len": 12,
+    "avg_weight": 0.1,
+    "icon": [
+      [ "<><", { "fg": "#999999" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Halibut",
+    "avg_len": 135,
+    "avg_weight": 115,
+    "icon": [
+      [ "<( )><", { "fg": "#825841" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Herring",
+    "avg_len": 37,
+    "avg_weight": 1.1,
+    "icon": [
+      [ "<=><", { "fg": "#c9daf8" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Loach",
+    "avg_len": 8,
+    "avg_weight": 0.1,
+    "icon": [
+      [ "<,--<", { "fg": "#778e45" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Minnow",
+    "avg_len": 5,
+    "avg_weight": 0.1,
+    "icon": [
+      [ "<--<", { "fg": "#778e45" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Perch",
+    "avg_len": 18,
+    "avg_weight": 0.5,
+    "icon": [
+      [ "<((>", { "fg": "#558e45" } ],
+      [ "<", { "fg": "#ff4d18" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Pike",
+    "avg_len": 75,
+    "avg_weight": 4.5,
+    "icon": [
+      [ "<==-<", { "fg": "#778e45" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Pupfish",
+    "avg_len": 7,
+    "avg_weight": 0.4,
+    "icon": [
+      [ "<°><", { "fg": "#4a86e8" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Sockeye Salmon",
+    "avg_len": 72,
+    "avg_weight": 4.8,
+    "icon": [
+      [ "<", { "fg": "#558e45" } ],
+      [ ")))>", { "fg": "#852E2E" } ],
+      [ "<", { "fg": "#558e45" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Trout",
+    "avg_len": 83,
+    "avg_weight": 5.3,
+    "icon": [
+      [ "<((((><", { "fg": "#BF964E" } ]
+    ],
+    "rarity": "Common"
+  },
+  {
+    "name": "Boxfish",
+    "avg_len": 29,
+    "avg_weight": 0.3,
+    "icon": [
+      [ "<°[]𝆓", { "fg": "#FFFF00" } ]
+    ],
+    "rarity": "Rare"
+  },
+  {
+    "name": "Eel",
+    "avg_len": 55,
+    "avg_weight": 1,
+    "icon": [
+      [ "~~~~", { "fg": "#558e45" } ]
+    ],
+    "rarity": "Rare"
+  },
+  {
+    "name": "Goldfish",
+    "avg_len": 19,
+    "avg_weight": 0.3,
+    "icon": [
+      [ "<><", { "fg": "#ff9900" } ]
+    ],
+    "rarity": "Rare"
+  },
+  {
+    "name": "Guppy",
+    "avg_len": 1,
+    "avg_weight": 0.1,
+    "icon": [
+      [ "∝", { "fg": "#ff9900" } ]
+    ],
+    "rarity": "Rare"
+  },
+  {
+    "name": "Jellyfish",
+    "avg_len": 25,
+    "avg_weight": 0.1,
+    "icon": [
+      [ "ଳ", { "fg": "#fca8ff" } ]
+    ],
+    "rarity": "Rare"
+  },
+  {
+    "name": "Squid",
+    "avg_len": 150,
+    "avg_weight": 45,
+    "icon": [
+      [ "くコ:彡", { "fg": "#0000ff" } ]
+    ],
+    "rarity": "Rare"
+  },
+  {
+    "name": "Colossal Squid",
+    "avg_len": 260,
+    "avg_weight": 300,
+    "icon": [ [ "くニニコ:彡", { "fg": "#cc4125" } ] ],
+    "rarity": "Epic"
+  },
+  {
+    "name": "Electric Eel",
+    "avg_len": 55,
+    "avg_weight": 1,
+    "icon": [
+      [ "~~~~", { "fg": "#FFFF00" } ]
+    ],
+    "rarity": "Epic"
+  },
+  {
+    "name": "Horseshoe Crab",
+    "avg_len": 42,
+    "avg_weight": 2.4,
+    "icon": [
+      [ "(}:-", { "fg": "#8A6B4E" } ]
+    ],
+    "rarity": "Epic"
+  },
+  {
+    "name": "Seahorse",
+    "avg_len": 6,
+    "avg_weight": 0.6,
+    "icon": [
+      [ "•^𝈢>", { "fg": "#ff9900" } ]
+    ],
+    "rarity": "Epic"
+  },
+  {
+    "name": "Seahorse?",
+    "avg_len": 152,
+    "avg_weight": 455,
+    "icon": [
+      [ "♘", { "fg": "#8A6B4E" } ]
+    ],
+    "rarity": "Legendary"
+  },
+  {
+    "name": "FISH",
+    "avg_len": 1,
+    "avg_weight": 1,
+    "icon": [
+      [ "𓆟 ", { "fg": "#FFFFFF" } ]
+    ],
+    "rarity": "Legendary"
+  },
+  {
+    "name": "Fishbones",
+    "avg_len": 50,
+    "avg_weight": 0.5,
+    "icon": [
+      [ "⋖϶;;;-<", { "fg": "#FFFFFF" } ]
+    ],
+    "rarity": "Legendary"
+  },
+  {
+    "name": "Gloopfish",
+    "avg_len": 177,
+    "avg_weight": 81.6,
+    "icon": [
+      [ "(•⩊•っ)3", { "fg": "#4a86e8" } ]
+    ],
+    "rarity": "Legendary"
+  },
+  {
+    "name": "Omkfish",
+    "avg_len": 106,
+    "avg_weight": 41,
+    "icon": [
+      [ "ඞ ", { "fg": "#cc0000" } ]
+    ],
+    "rarity": "Legendary"
+  }
 ]
