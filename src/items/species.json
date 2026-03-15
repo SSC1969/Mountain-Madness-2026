@@ -1,7 +1,6 @@
 [
     {
         "name": "Sockeye Salmon",
-        "base_value": 35,
         "avg_len": 72,
         "avg_weight": 4.8,
         "icon": [
@@ -28,7 +27,6 @@
     },
     {
         "name": "Halibut",
-        "base_value": 80,
         "avg_len": 135,
         "avg_weight": 115.0,
         "icon": [
@@ -43,17 +41,41 @@
     },
     {
         "name": "Trout",
-        "base_value": 50,
         "avg_len": 83,
         "avg_weight": 5.3,
         "icon": [
             [
                 "<((((><",
-                {
-                    "fg": "#BF964E"
-                }
+                { "fg": "#BF964E" }
             ]
         ],
         "rarity": "Common"
+    },
+    {
+        "name": "Horseshoe Crab",
+        "avg_len": 42,
+        "avg_weight": 2.4,
+        "icon": [
+            [ "(}:-", {"fg": "#8A6B4E"} ]
+        ],
+        "rarity": "Rare"
+    },
+    {
+        "name": "FISH",
+        "avg_len": 1,
+        "avg_weight": 1.0,
+        "icon": [
+            [ "𓆟  ", {"fg": "#FFFFFF"} ]
+        ],
+        "rarity": "Legendary"
+    },
+    {
+        "name": "Boxfish",
+        "avg_len": 29,
+        "avg_weight": 0.3,
+        "icon": [
+            [ "<º[]𝆓 ", {"fg": "#FFFF00"} ]
+        ],
+        "rarity": "Rare"
     }
 ]
