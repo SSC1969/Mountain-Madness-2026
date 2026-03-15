@@ -191,7 +191,7 @@
     "name": "Colossal Squid",
     "avg_len": 260,
     "avg_weight": 300,
-    "icon": [ [ "くニニニコ:彡", { "fg": "#cc4125" } ] ],
+    "icon": [ [ "くニニコ:彡", { "fg": "#cc4125" } ] ],
     "rarity": "Epic"
   },
   {
@@ -222,7 +222,7 @@
     "rarity": "Epic"
   },
   {
-    "name": "'Seahorse'",
+    "name": "Seahorse?",
     "avg_len": 152,
     "avg_weight": 455,
     "icon": [
@@ -262,7 +262,7 @@
     "avg_len": 106,
     "avg_weight": 41,
     "icon": [
-      [ "ඞ", { "fg": "#cc0000" } ]
+      [ "ඞ ", { "fg": "#cc0000" } ]
     ],
     "rarity": "Legendary"
   }
