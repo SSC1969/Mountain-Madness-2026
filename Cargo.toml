@@ -1,6 +1,6 @@
 [package]
 name = "TermFishing"
-version = "0.1.2"
+version = "1.0.0"
 edition = "2024"
 description = "A small TUI-based fishing game."
 license = "GPL-3.0-or-later"
