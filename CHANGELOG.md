@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1](https://github.com/SSC1969/TermFishing/compare/v1.0.0...v1.0.1) - 2026-03-16
+
+### Added
+
+- 7 new fish, including three new legendary fish!
+
+### Fixed
+
+- holding f no longer skips playing the game
+- newly added fish now get included in the dex in existing saves
+
+### Other
+
+- Update CI targets and OS versions in cd.yml
+
 ## [1.0.0](https://github.com/SSC1969/TermFishing/compare/v0.1.2...v1.0.0) - 2026-03-15
 
 ### Added
