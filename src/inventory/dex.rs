@@ -32,6 +32,13 @@ impl Dex {
     pub fn get_all(&self) -> Vec<&DexEntries> {
         self.items.values().collect()
     }
+
+    pub fn try_create(&mut self, species: &'static Species) {
+        self.items.insert(
+            species.name.clone(),
+            DexEntries::Fish(FishEntry::new(species)),
+        );
+    }
 }
 
 impl Default for Dex {
@@ -51,6 +58,19 @@ impl Inventory for Dex {
     fn add_item(&mut self, item: ItemTypes) {
         if let Some(entry) = self.get_mut(item.name()) {
             entry.update(item);
+        } else {
+            match item {
+                ItemTypes::Fish(fish) => {
+                    self.items.insert(
+                        fish.species.0.name.clone(),
+                        DexEntries::Fish(FishEntry::new(fish.species.0)),
+                    );
+                }
+                ItemTypes::Rod(rod) => {
+                    self.items
+                        .insert(rod.name.clone(), DexEntries::Rod(rod.clone()));
+                }
+            }
         }
     }
     fn remove_item(&mut self, item: ItemTypes) {

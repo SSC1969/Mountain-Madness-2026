@@ -10,7 +10,10 @@ use crate::{
     config::get_data_dir,
     event::{AppEvent, Event, EventHandler, NavigationDirection},
     inventory::{Inventory, shop::Shop},
-    items::{Item, ItemTypes, fish::Fish},
+    items::{
+        Item, ItemTypes,
+        fish::{Fish, SPECIES},
+    },
     player::{FishingState, Player},
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -436,7 +439,11 @@ impl App {
         data_dir.push("player.dat");
         let file: File = File::open(data_dir)?;
         let reader: BufReader<File> = BufReader::new(file);
-        let player: Player = rmp_serde::from_read(reader)?;
+        let mut player: Player = rmp_serde::from_read(reader)?;
+
+        SPECIES.iter().for_each(|spec| {
+            player.dex.try_create(spec);
+        });
 
         Ok(player)
     }
