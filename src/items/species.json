@@ -2,7 +2,7 @@
   {
     "name": "Carp",
     "avg_len": 40,
-    "avg_weight": 1,
+    "avg_weight": 1.0,
     "icon": [
       [ "<;))><", { "fg": "#b6d7a8" } ]
     ],
@@ -145,7 +145,7 @@
   {
     "name": "Eel",
     "avg_len": 55,
-    "avg_weight": 1,
+    "avg_weight": 1.0,
     "icon": [
       [ "~~~~", { "fg": "#558e45" } ]
     ],
@@ -181,9 +181,27 @@
   {
     "name": "Squid",
     "avg_len": 150,
-    "avg_weight": 45,
+    "avg_weight": 45.0,
     "icon": [
       [ "くコ:彡", { "fg": "#0000ff" } ]
+    ],
+    "rarity": "Rare"
+  },
+  {
+    "name": "Pufferfish",
+    "avg_len": 35,
+    "avg_weight": 1.0,
+    "icon": [
+      [ "O<", { "fg": "#FFFF00" } ]
+    ],
+    "rarity": "Rare"
+  },
+  {
+    "name": "Boney-Eared Assfish",
+    "avg_len": 37,
+    "avg_weight": 0.7,
+    "icon": [
+      [ "-", { "fg": "#999999" } ]
     ],
     "rarity": "Rare"
   },
@@ -197,7 +215,7 @@
   {
     "name": "Electric Eel",
     "avg_len": 55,
-    "avg_weight": 1,
+    "avg_weight": 1.0,
     "icon": [
       [ "~~~~", { "fg": "#FFFF00" } ]
     ],
@@ -222,9 +240,30 @@
     "rarity": "Epic"
   },
   {
+    "name": "Swordfish",
+    "avg_len": 300,
+    "avg_weight": 650.0,
+    "icon": [
+      [ "--<'.')><", { "fg": "#999999" } ]
+    ],
+    "rarity": "Epic"
+  },
+  {
+    "name": "Manta Ray",
+    "avg_len": 300,
+    "avg_weight": 650.0,
+    "icon": [
+      [ "<;", { "fg": "#999999" } ],
+      [ "^", { "fg": "#FFFFFF" } ],
+      [ ";>", { "fg": "#999999" } ]
+
+    ],
+    "rarity": "Epic"
+  },
+  {
     "name": "Seahorse?",
     "avg_len": 152,
-    "avg_weight": 455,
+    "avg_weight": 455.0,
     "icon": [
       [ "♘", { "fg": "#8A6B4E" } ]
     ],
@@ -233,7 +272,7 @@
   {
     "name": "FISH",
     "avg_len": 1,
-    "avg_weight": 1,
+    "avg_weight": 1.0,
     "icon": [
       [ "𓆟 ", { "fg": "#FFFFFF" } ]
     ],
@@ -260,9 +299,38 @@
   {
     "name": "Omkfish",
     "avg_len": 106,
-    "avg_weight": 41,
+    "avg_weight": 41.0,
     "icon": [
       [ "ඞ ", { "fg": "#cc0000" } ]
+    ],
+    "rarity": "Legendary"
+  },
+  {
+    "name": "The Looker",
+    "avg_len": 1,
+    "avg_weight": 100.0,
+    "icon": [
+      [ "<", { "fg": "#FFFF00" } ],
+      [ "@@", { "fg": "#FFFFFF" } ],
+      [ "^><", { "fg": "#FFFF00" } ]
+    ],
+    "rarity": "Legendary"
+  },
+  {
+    "name": "Mathfish",
+    "avg_len": 7,
+    "avg_weight": 3.14,
+    "icon": [
+      [ "(*+-)=", { "fg": "#FF0000" } ]
+    ],
+    "rarity": "Legendary"
+  },
+  {
+    "name": "...what?",
+    "avg_len": 150,
+    "avg_weight": 10.0,
+    "icon": [
+      [ "( ´w｀)", { "fg": "#FF0000" } ]
     ],
     "rarity": "Legendary"
   }

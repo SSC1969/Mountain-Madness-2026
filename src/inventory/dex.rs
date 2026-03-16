@@ -174,7 +174,7 @@ impl DexEntry for FishEntry {
 
     fn get_lines(&self) -> Text<'_> {
         Text::from({
-            if self.count > 500 {
+            if self.count <= 0 {
                 vec![
                     Line::from("???").bold().underlined(),
                     "Not discovered yet!".into(),
