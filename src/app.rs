@@ -305,6 +305,13 @@ impl App {
                 'b' => self.events.send(AppEvent::ChangeMenu(Menu::Backpack)),
                 'h' => self.events.send(AppEvent::ChangeMenu(Menu::Help)),
                 'o' => self.events.send(AppEvent::ChangeMenu(Menu::Options)),
+                'f' => {
+                    if self.player.fishing_state == FishingState::Biting {
+                        self.events.send(AppEvent::FishCatching);
+                    } else if self.player.fishing_state == FishingState::Idle {
+                        self.events.send(AppEvent::CastRod);
+                    }
+                }
                 _ => self.handle_menu_key_events(key_event)?,
             },
 
