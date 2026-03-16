@@ -32,6 +32,13 @@ impl Dex {
     pub fn get_all(&self) -> Vec<&DexEntries> {
         self.items.values().collect()
     }
+
+    pub fn try_create(&mut self, species: &'static Species) {
+        self.items.insert(
+            species.name.clone(),
+            DexEntries::Fish(FishEntry::new(species)),
+        );
+    }
 }
 
 impl Default for Dex {
@@ -51,6 +58,19 @@ impl Inventory for Dex {
     fn add_item(&mut self, item: ItemTypes) {
         if let Some(entry) = self.get_mut(item.name()) {
             entry.update(item);
+        } else {
+            match item {
+                ItemTypes::Fish(fish) => {
+                    self.items.insert(
+                        fish.species.0.name.clone(),
+                        DexEntries::Fish(FishEntry::new(fish.species.0)),
+                    );
+                }
+                ItemTypes::Rod(rod) => {
+                    self.items
+                        .insert(rod.name.clone(), DexEntries::Rod(rod.clone()));
+                }
+            }
         }
     }
     fn remove_item(&mut self, item: ItemTypes) {
@@ -65,7 +85,7 @@ pub trait DexEntry {
     fn get_lines(&self) -> Text<'_>;
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PartialEq)]
 pub enum DexEntries {
     Fish(FishEntry),
     Rod(Rod),
@@ -87,7 +107,34 @@ impl DexEntry for DexEntries {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+impl PartialOrd for DexEntries {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match self {
+            DexEntries::Fish(fish) => {
+                if let DexEntries::Fish(o_fish) = other {
+                    Some(
+                        fish.species
+                            .0
+                            .rarity
+                            .cmp(&o_fish.species.0.rarity)
+                            .then(fish.species.0.name.cmp(&o_fish.species.0.name)),
+                    )
+                } else {
+                    None
+                }
+            }
+            DexEntries::Rod(rod) => {
+                if let DexEntries::Rod(o_rod) = other {
+                    Some(rod.name.cmp(&o_rod.name))
+                } else {
+                    None
+                }
+            }
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, PartialEq)]
 pub struct FishEntry {
     species: SpeciesRef,
     count: u32,

@@ -10,7 +10,10 @@ use crate::{
     config::get_data_dir,
     event::{AppEvent, Event, EventHandler, NavigationDirection},
     inventory::{Inventory, shop::Shop},
-    items::{Item, ItemTypes, fish::Fish},
+    items::{
+        Item, ItemTypes,
+        fish::{Fish, SPECIES},
+    },
     player::{FishingState, Player},
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -271,11 +274,6 @@ impl App {
             }
             return Ok(());
         }
-        if (self.player.fishing_state == FishingState::Biting)
-            && (key_event.code == KeyCode::Char('f'))
-        {
-            self.events.send(AppEvent::FishCatching);
-        }
         match key_event.code {
             KeyCode::Esc | KeyCode::Char('q') => self.events.send(AppEvent::Quit),
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
@@ -302,6 +300,13 @@ impl App {
                 'b' => self.events.send(AppEvent::ChangeMenu(Menu::Backpack)),
                 'h' => self.events.send(AppEvent::ChangeMenu(Menu::Help)),
                 'o' => self.events.send(AppEvent::ChangeMenu(Menu::Options)),
+                'f' => {
+                    if self.player.fishing_state == FishingState::Biting {
+                        self.events.send(AppEvent::FishCatching);
+                    } else if self.player.fishing_state == FishingState::Idle {
+                        self.events.send(AppEvent::CastRod);
+                    }
+                }
                 _ => self.handle_menu_key_events(key_event)?,
             },
 
@@ -436,7 +441,11 @@ impl App {
         data_dir.push("player.dat");
         let file: File = File::open(data_dir)?;
         let reader: BufReader<File> = BufReader::new(file);
-        let player: Player = rmp_serde::from_read(reader)?;
+        let mut player: Player = rmp_serde::from_read(reader)?;
+
+        SPECIES.iter().for_each(|spec| {
+            player.dex.try_create(spec);
+        });
 
         Ok(player)
     }
