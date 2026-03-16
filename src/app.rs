@@ -274,11 +274,6 @@ impl App {
             }
             return Ok(());
         }
-        if (self.player.fishing_state == FishingState::Biting)
-            && (key_event.code == KeyCode::Char('f'))
-        {
-            self.events.send(AppEvent::FishCatching);
-        }
         match key_event.code {
             KeyCode::Esc | KeyCode::Char('q') => self.events.send(AppEvent::Quit),
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
