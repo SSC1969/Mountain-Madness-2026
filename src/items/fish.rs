@@ -143,7 +143,19 @@ impl Species {
 }
 
 #[derive(
-    VariantArray, Default, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy, EnumIter, Serialize,
+    VariantArray,
+    Default,
+    Deserialize,
+    Debug,
+    Eq,
+    PartialEq,
+    Hash,
+    Clone,
+    Copy,
+    EnumIter,
+    Serialize,
+    PartialOrd,
+    Ord,
 )]
 pub enum SpeciesRarity {
     #[default]

@@ -65,7 +65,7 @@ pub trait DexEntry {
     fn get_lines(&self) -> Text<'_>;
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PartialEq)]
 pub enum DexEntries {
     Fish(FishEntry),
     Rod(Rod),
@@ -87,7 +87,34 @@ impl DexEntry for DexEntries {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+impl PartialOrd for DexEntries {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match self {
+            DexEntries::Fish(fish) => {
+                if let DexEntries::Fish(o_fish) = other {
+                    Some(
+                        fish.species
+                            .0
+                            .rarity
+                            .cmp(&o_fish.species.0.rarity)
+                            .then(fish.species.0.name.cmp(&o_fish.species.0.name)),
+                    )
+                } else {
+                    None
+                }
+            }
+            DexEntries::Rod(rod) => {
+                if let DexEntries::Rod(o_rod) = other {
+                    Some(rod.name.cmp(&o_rod.name))
+                } else {
+                    None
+                }
+            }
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, PartialEq)]
 pub struct FishEntry {
     species: SpeciesRef,
     count: u32,
@@ -127,7 +154,7 @@ impl DexEntry for FishEntry {
 
     fn get_lines(&self) -> Text<'_> {
         Text::from({
-            if self.count <= 0 {
+            if self.count > 500 {
                 vec![
                     Line::from("???").bold().underlined(),
                     "Not discovered yet!".into(),

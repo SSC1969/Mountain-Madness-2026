@@ -452,6 +452,7 @@ impl App {
             DexEntries::Rod(_) => self.menu_tab == 1,
         });
 
+        items.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let list_items = items
             .into_iter()
             .map(|entry| ListItem::from(entry.get_lines()));
