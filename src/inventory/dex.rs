@@ -34,10 +34,12 @@ impl Dex {
     }
 
     pub fn try_create(&mut self, species: &'static Species) {
-        self.items.insert(
-            species.name.clone(),
-            DexEntries::Fish(FishEntry::new(species)),
-        );
+        if self.items.get(&species.name).is_none() {
+            self.items.insert(
+                species.name.clone(),
+                DexEntries::Fish(FishEntry::new(species)),
+            );
+        }
     }
 }
 
